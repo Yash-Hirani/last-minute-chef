@@ -4,93 +4,95 @@ import { Recipe } from "@/lib/types";
 
 interface Props {
   recipe: Recipe;
-  index: number;
   onViewRecipe: (recipe: Recipe) => void;
-  onOrderMissing: (recipe: Recipe) => void;
+  onOrder: (recipe: Recipe) => void;
   onSave: (recipe: Recipe) => void;
   isSaved: boolean;
+  index: number;
 }
 
-export default function RecipeCard({ recipe, index, onViewRecipe, onOrderMissing, onSave, isSaved }: Props) {
-  const available = recipe.ingredients.filter((i) => i.available);
-  const missing = recipe.ingredients.filter((i) => !i.available);
+export default function RecipeCard({ recipe, onViewRecipe, onOrder, onSave, isSaved, index }: Props) {
+  const totalIngredients = recipe.ingredients.length;
+  const availableCount = recipe.ingredients.filter((i) => i.available).length;
+  const matchPercent = Math.round((availableCount / totalIngredients) * 100);
+  const missingItems = recipe.ingredients.filter((i) => !i.available);
 
-  const difficultyColor = {
-    Easy: "text-cardamom bg-cardamom/10 border-cardamom/20",
-    Medium: "text-saffron bg-saffron/10 border-saffron/20",
-    Hard: "text-chili bg-chili/10 border-chili/20",
-  }[recipe.difficulty];
+  const difficultyColor: Record<string, string> = {
+    Easy: "bg-secondary/10 text-secondary border-secondary/20",
+    Medium: "bg-primary/10 text-primary border-primary/20",
+    Hard: "bg-error/10 text-error border-error/20",
+  };
 
   return (
-    <div className={`animate-fade-up delay-${index + 1} glass rounded-2xl p-5 hover:bg-card-hover transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-saffron/5 group`}>
-      {/* Header */}
-      <div className="flex items-start justify-between mb-3">
-        <div className="flex-1">
-          <h3 className="text-lg font-bold font-[var(--font-display)] text-foreground group-hover:text-saffron-light transition-colors">{recipe.name}</h3>
-          <div className="flex items-center gap-2 mt-1">
-            <span className="text-xs text-muted">{recipe.cuisine}</span>
-            <span className="text-muted/30">•</span>
-            <span className="text-xs text-muted">{recipe.cookTime}</span>
-            <span className="text-muted/30">•</span>
-            <span className={`text-xs px-2 py-0.5 rounded-lg border ${difficultyColor}`}>{recipe.difficulty}</span>
+    <div className={`card p-0 overflow-hidden animate-fade-up delay-${index + 1}`}>
+      {/* Card header */}
+      <div className="p-5 pb-4">
+        <div className="flex justify-between items-start mb-3">
+          <div className="flex-1 mr-3">
+            <h3 className="font-[var(--font-display)] text-lg font-semibold text-on-surface leading-tight mb-1.5">{recipe.name}</h3>
+            <div className="flex items-center gap-2 text-xs text-on-surface-variant">
+              <span>{recipe.cuisine}</span>
+              <span className="w-1 h-1 rounded-full bg-outline-variant" />
+              <span>{recipe.cookTime}</span>
+              <span className="w-1 h-1 rounded-full bg-outline-variant" />
+              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${difficultyColor[recipe.difficulty] || "bg-surface-container text-on-surface-variant border-outline-variant/20"}`}>
+                {recipe.difficulty}
+              </span>
+            </div>
           </div>
-        </div>
-        <button onClick={() => onSave(recipe)} className={`p-2 rounded-xl transition-all ${isSaved ? "text-chili" : "text-muted hover:text-chili/70"}`} title={isSaved ? "Unsave" : "Save recipe"}>
-          <svg className="w-5 h-5" fill={isSaved ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-          </svg>
-        </button>
-      </div>
-
-      {/* Description */}
-      <p className="text-sm text-muted mb-4 line-clamp-2">{recipe.description}</p>
-
-      {/* Match bar */}
-      <div className="mb-4">
-        <div className="flex items-center justify-between text-xs mb-1.5">
-          <span className="text-muted">Ingredient match</span>
-          <span className="font-semibold text-cardamom">{recipe.matchPercentage}%</span>
-        </div>
-        <div className="h-1.5 bg-surface rounded-full overflow-hidden">
-          <div className="h-full bg-gradient-to-r from-cardamom to-cardamom-dark rounded-full transition-all duration-700" style={{ width: `${recipe.matchPercentage}%` }} />
-        </div>
-      </div>
-
-      {/* Ingredients summary */}
-      <div className="space-y-2 mb-4">
-        <div className="flex flex-wrap gap-1.5">
-          {available.slice(0, 5).map((ing) => (
-            <span key={ing.name} className="text-xs px-2 py-1 rounded-lg bg-cardamom/10 text-cardamom border border-cardamom/15">✓ {ing.name}</span>
-          ))}
-          {available.length > 5 && <span className="text-xs px-2 py-1 rounded-lg bg-cardamom/10 text-cardamom">+{available.length - 5} more</span>}
-        </div>
-        {missing.length > 0 && (
-          <div className="flex flex-wrap gap-1.5">
-            {missing.map((ing) => (
-              <span key={ing.name} className="text-xs px-2 py-1 rounded-lg bg-chili/10 text-chili/80 border border-chili/15">✗ {ing.name}</span>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Cost gap */}
-      {missing.length > 0 && (
-        <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-surface/50 mb-4">
-          <span className="text-xs text-muted">Missing {missing.length} item{missing.length > 1 ? "s" : ""}</span>
-          <span className="text-sm font-bold text-saffron">₹{recipe.missingCost}</span>
-        </div>
-      )}
-
-      {/* Actions */}
-      <div className="flex gap-2">
-        <button onClick={() => onViewRecipe(recipe)} className="flex-1 px-4 py-2.5 rounded-xl text-sm font-medium glass text-foreground hover:bg-surface-light transition-all">
-          View Recipe
-        </button>
-        {missing.length > 0 && (
-          <button onClick={() => onOrderMissing(recipe)} className="flex-1 btn-glow px-4 py-2.5 rounded-xl text-sm">
-            Order ₹{recipe.missingCost}
+          <button onClick={() => onSave(recipe)} className={`p-2 rounded-full transition-all ${isSaved ? "text-primary bg-primary/10" : "text-outline hover:text-primary hover:bg-primary/5"}`} title={isSaved ? "Unsave" : "Save"}>
+            <svg className="w-5 h-5" fill={isSaved ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
           </button>
-        )}
+        </div>
+
+        <p className="text-sm text-on-surface-variant leading-relaxed mb-4">{recipe.description}</p>
+
+        {/* Match bar */}
+        <div className="flex items-center justify-between text-xs mb-2">
+          <span className="text-on-surface-variant font-medium">Ingredient match</span>
+          <span className={`font-bold ${matchPercent >= 70 ? "text-secondary" : matchPercent >= 50 ? "text-primary" : "text-error"}`}>{matchPercent}%</span>
+        </div>
+        <div className="w-full h-2 rounded-full bg-surface-container-high overflow-hidden mb-4">
+          <div className={`h-full rounded-full transition-all duration-700 ${matchPercent >= 70 ? "bg-secondary" : matchPercent >= 50 ? "bg-primary" : "bg-error"}`} style={{ width: `${matchPercent}%` }} />
+        </div>
+
+        {/* Ingredient pills */}
+        <div className="flex flex-wrap gap-1.5 mb-3">
+          {recipe.ingredients.filter((i) => i.available).slice(0, 5).map((ing) => (
+            <span key={ing.name} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-secondary/8 text-secondary border border-secondary/15">
+              <span className="text-secondary">✓</span> {ing.name}
+            </span>
+          ))}
+          {availableCount > 5 && (
+            <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-surface-container text-on-surface-variant">+{availableCount - 5} more</span>
+          )}
+        </div>
+        <div className="flex flex-wrap gap-1.5 mb-3">
+          {missingItems.slice(0, 3).map((ing) => (
+            <span key={ing.name} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-error/8 text-error border border-error/15">
+              <span>✕</span> {ing.name}
+            </span>
+          ))}
+          {missingItems.length > 3 && (
+            <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-surface-container text-on-surface-variant">+{missingItems.length - 3} more</span>
+          )}
+        </div>
+      </div>
+
+      {/* Card footer */}
+      <div className="px-5 py-4 border-t border-outline-variant/15 bg-surface-container-low/50 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3 text-xs text-on-surface-variant">
+          <span>Missing {missingItems.length} item{missingItems.length !== 1 ? "s" : ""}</span>
+          {recipe.estimatedCost && (
+            <span className="font-bold text-primary text-sm">₹{recipe.estimatedCost}</span>
+          )}
+        </div>
+        <div className="flex gap-2">
+          <button onClick={() => onViewRecipe(recipe)} className="btn-ghost px-4 py-2 text-sm">View Recipe</button>
+          <button onClick={() => onOrder(recipe)} className="btn-primary px-4 py-2 text-sm">
+            Order {recipe.estimatedCost ? `₹${recipe.estimatedCost}` : ""}
+          </button>
+        </div>
       </div>
     </div>
   );

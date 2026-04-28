@@ -148,11 +148,11 @@ let currentCart: CartItem[] = [];
 
 export function addToCart(products: Product[]): Cart {
   for (const product of products) {
-    const existing = currentCart.find((item) => item.product.name === product.name);
+    const existing = currentCart.find((item) => item.name === product.name);
     if (existing) {
       existing.quantity += 1;
     } else {
-      currentCart.push({ product, quantity: 1 });
+      currentCart.push({ name: product.name, price: product.price, unit: product.unit, brand: product.brand, quantity: 1 });
     }
   }
   return getCart();
@@ -160,7 +160,7 @@ export function addToCart(products: Product[]): Cart {
 
 export function getCart(): Cart {
   const subtotal = currentCart.reduce(
-    (sum, item) => sum + item.product.price * item.quantity,
+    (sum, item) => sum + item.price * item.quantity,
     0
   );
   const deliveryFee = subtotal > 0 ? 25 : 0;
@@ -190,3 +190,4 @@ export function checkout(): OrderConfirmation {
   currentCart = [];
   return order;
 }
+

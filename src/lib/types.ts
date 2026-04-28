@@ -28,6 +28,7 @@ export interface Recipe {
   nutrition: NutritionInfo;
   matchPercentage: number;
   missingCost: number;
+  estimatedCost?: number;
 }
 
 export interface RecipeRequest {
@@ -48,8 +49,11 @@ export interface Product {
 }
 
 export interface CartItem {
-  product: Product;
+  name: string;
   quantity: number;
+  price: number;
+  unit: string;
+  brand: string;
 }
 
 export interface Cart {
@@ -57,6 +61,12 @@ export interface Cart {
   subtotal: number;
   deliveryFee: number;
   total: number;
+}
+
+export interface Filters {
+  dietary: string[];
+  allergies: string[];
+  mealType: string;
 }
 
 export interface OrderConfirmation {

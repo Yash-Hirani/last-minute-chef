@@ -16,63 +16,61 @@ export default function AuthModal({ isOpen, onClose, onAuthenticated }: Props) {
 
   if (!isOpen) return null;
 
-  const handlePhoneSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (phone.length >= 10) {
-      setLoading(true);
-      setTimeout(() => { setLoading(false); setStep("otp"); }, 800);
-    }
+  const handleGetOtp = () => {
+    if (phone.length < 10) return;
+    setLoading(true);
+    setTimeout(() => { setLoading(false); setStep("otp"); }, 1200);
   };
 
-  const handleOtpSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (otp.length >= 4) {
-      setLoading(true);
-      setTimeout(() => { setLoading(false); onAuthenticated(); setStep("phone"); setPhone(""); setOtp(""); }, 800);
-    }
+  const handleVerify = () => {
+    if (otp.length < 4) return;
+    setLoading(true);
+    setTimeout(() => {
+      setLoading(false);
+      localStorage.setItem("lmc_auth", JSON.stringify({ phone, name: "Chef User", ts: Date.now() }));
+      onAuthenticated();
+    }, 1000);
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative glass-strong rounded-3xl p-8 w-full max-w-sm animate-fade-up shadow-2xl">
-        {/* Swiggy branding */}
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-on-surface/30 backdrop-blur-sm p-4">
+      <div className="w-full max-w-md bg-surface-container-lowest rounded-2xl shadow-ambient-3 animate-fade-up p-8 relative">
+        <button onClick={onClose} className="absolute top-4 right-4 p-2 rounded-xl hover:bg-surface-container transition-colors text-on-surface-variant hover:text-on-surface">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+        </button>
+
         <div className="text-center mb-6">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-orange-500 to-orange-600 text-white text-2xl mb-3 shadow-lg shadow-orange-500/20">🛒</div>
-          <h2 className="text-xl font-bold font-[var(--font-display)]">Sign in with Instamart</h2>
-          <p className="text-sm text-muted mt-1">Quick sign-in to save recipes &amp; order</p>
+          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center text-2xl mx-auto mb-4 shadow-lg shadow-primary/15">🛒</div>
+          <h3 className="font-[var(--font-display)] text-xl font-bold text-on-surface">Sign in with Instamart</h3>
+          <p className="text-sm text-on-surface-variant mt-1">Quick sign-in to save recipes & order</p>
         </div>
 
         {step === "phone" ? (
-          <form onSubmit={handlePhoneSubmit} className="space-y-4">
+          <div className="space-y-4">
             <div>
-              <label className="block text-xs font-medium text-muted-light mb-1.5">Phone Number</label>
-              <div className="flex items-center gap-2 glass rounded-xl px-4 py-3 focus-within:border-saffron/50">
-                <span className="text-sm text-muted">+91</span>
-                <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))} placeholder="Enter your number" className="flex-1 bg-transparent border-none outline-none text-foreground text-sm" autoFocus />
+              <label className="block text-sm font-semibold text-on-surface mb-2">Phone Number</label>
+              <div className="flex gap-2 input-well px-4 py-3">
+                <span className="text-on-surface-variant font-medium text-sm">+91</span>
+                <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))} placeholder="Enter your number" className="flex-1 bg-transparent outline-none text-on-surface text-sm placeholder:text-outline" id="phone-input" autoFocus />
               </div>
             </div>
-            <button type="submit" disabled={phone.length < 10 || loading} className="w-full btn-glow py-3 rounded-xl text-sm flex items-center justify-center gap-2">
-              {loading ? <><div className="spinner w-4 h-4" />Sending OTP...</> : "Get OTP"}
+            <button onClick={handleGetOtp} disabled={phone.length < 10 || loading} className="btn-primary w-full py-3 text-sm flex items-center justify-center gap-2">
+              {loading ? <span className="spinner w-5 h-5" /> : "Get OTP"}
             </button>
-          </form>
+          </div>
         ) : (
-          <form onSubmit={handleOtpSubmit} className="space-y-4">
+          <div className="space-y-4">
+            <p className="text-sm text-center text-on-surface-variant">OTP sent to +91 {phone}</p>
             <div>
-              <label className="block text-xs font-medium text-muted-light mb-1.5">Enter OTP sent to +91 {phone}</label>
-              <input type="text" value={otp} onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))} placeholder="Enter 4-digit OTP" className="w-full glass rounded-xl px-4 py-3 bg-transparent border-none outline-none text-foreground text-sm text-center tracking-[0.5em] focus:border-saffron/50" autoFocus />
-              <p className="text-xs text-muted mt-2 text-center">Demo: any 4+ digits work</p>
+              <label className="block text-sm font-semibold text-on-surface mb-2">Enter OTP</label>
+              <input type="text" value={otp} onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 4))} placeholder="4-digit OTP" className="input-well w-full px-4 py-3 bg-transparent text-center text-on-surface text-lg tracking-[0.5em] font-bold placeholder:text-outline placeholder:tracking-normal placeholder:text-sm placeholder:font-normal outline-none" id="otp-input" maxLength={4} autoFocus />
             </div>
-            <button type="submit" disabled={otp.length < 4 || loading} className="w-full btn-glow py-3 rounded-xl text-sm flex items-center justify-center gap-2">
-              {loading ? <><div className="spinner w-4 h-4" />Verifying...</> : "Verify & Continue"}
+            <button onClick={handleVerify} disabled={otp.length < 4 || loading} className="btn-primary w-full py-3 text-sm flex items-center justify-center gap-2">
+              {loading ? <span className="spinner w-5 h-5" /> : "Verify & Continue"}
             </button>
-            <button type="button" onClick={() => setStep("phone")} className="w-full text-xs text-muted hover:text-foreground transition-colors py-1">← Change number</button>
-          </form>
+            <button onClick={() => { setStep("phone"); setOtp(""); }} className="w-full text-center text-sm text-primary hover:text-primary-dark transition-colors font-medium">Change number</button>
+          </div>
         )}
-
-        <button onClick={onClose} className="absolute top-4 right-4 p-1.5 rounded-lg text-muted hover:text-foreground hover:bg-surface-light/50 transition-all">
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-        </button>
       </div>
     </div>
   );
