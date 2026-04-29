@@ -63,12 +63,12 @@ const recipeResponseSchema: Schema = {
   required: ["recipes"],
 };
 
-export async function generateRecipes(
+export async function generateRecipesStream(
   ingredients: string[],
   dietary: string[],
   allergies: string[],
   mealType: string
-): Promise<unknown> {
+) {
   const model = genAI.getGenerativeModel({
     model: "gemini-2.5-flash",
     generationConfig: {
@@ -101,7 +101,6 @@ RULES:
 7. Each recipe should be meaningfully different from the others.
 8. Provide realistic nutritional estimates per serving.`;
 
-  const result = await model.generateContent(prompt);
-  const text = result.response.text();
-  return JSON.parse(text);
+  const result = await model.generateContentStream(prompt);
+  return result.stream;
 }

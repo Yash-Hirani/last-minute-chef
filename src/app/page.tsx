@@ -26,24 +26,77 @@ export default function Home() {
   const [pendingOrder, setPendingOrder] = useState<Recipe | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const [loadingNormal, setLoadingNormal] = useState(false);
+
   const findRecipes = async () => {
     if (ingredients.length === 0) return;
     setLoading(true);
     setError(null);
     setRecipes([]);
     try {
+      const res = await fetch("/api/recipes/normal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ingredients, dietary: filters.dietary, allergies: filters.allergies, mealType: filters.mealType }),
+      });
+      if (!res.ok) throw new Error("Failed to fetch recipes");
+      const data = await res.json();
+      if (data.recipes) {
+        setRecipes(data.recipes.sort((a: Recipe, b: Recipe) => b.matchPercentage - a.matchPercentage));
+      }
+    } catch (err) {
+      console.error(err);
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchAIRecipes = async () => {
+    if (ingredients.length === 0) return;
+    setLoadingNormal(true);
+    try {
       const res = await fetch("/api/recipes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ingredients, dietary: filters.dietary, allergies: filters.allergies, mealType: filters.mealType }),
       });
-      if (!res.ok) throw new Error("Failed to generate recipes");
-      const data = await res.json();
-      setRecipes(data.recipes || []);
-    } catch {
-      setError("Something went wrong. Please try again.");
+      if (!res.ok) throw new Error("Failed to generate AI recipes");
+      
+      const reader = res.body?.getReader();
+      const decoder = new TextDecoder("utf-8");
+      
+      if (!reader) throw new Error("No readable stream");
+      
+      let buffer = "";
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
+        
+        for (const line of lines) {
+          if (line.trim()) {
+            try {
+              const recipe = JSON.parse(line);
+              setRecipes(prev => {
+                const existingNames = new Set(prev.map(r => r.name));
+                if (existingNames.has(recipe.name)) return prev;
+                return [...prev, recipe];
+              });
+            } catch (err) {
+              console.error("Failed to parse recipe line:", err);
+            }
+          }
+        }
+      }
+    } catch (err) {
+      console.error(err);
+      setError("Failed to generate AI recipes.");
     } finally {
-      setLoading(false);
+      setLoadingNormal(false);
     }
   };
 
@@ -95,7 +148,7 @@ export default function Home() {
             {/* Powered by badge */}
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-surface-container-lowest border border-outline-variant/20 text-xs text-on-surface-variant mb-6 shadow-ambient-1">
               <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-              Powered by AI · Prices from Instamart
+              Dataset-backed · Prices from Instamart
             </div>
 
             <h1 className="font-[var(--font-display)] text-4xl sm:text-5xl lg:text-6xl font-bold text-on-surface leading-[1.15] mb-3">
@@ -104,7 +157,7 @@ export default function Home() {
               <span className="text-primary">Order what you don&apos;t.</span>
             </h1>
             <p className="text-base sm:text-lg text-on-surface-variant max-w-xl mx-auto leading-relaxed mb-10">
-              Enter your ingredients, set your preferences, and get AI-powered recipes with live Instamart pricing for anything you&apos;re missing.
+              Enter your ingredients, set your preferences, and get fast dataset-backed recipes with live Instamart pricing for anything you&apos;re missing.
             </p>
 
             {/* Input area */}
@@ -143,6 +196,16 @@ export default function Home() {
                 {recipes.map((recipe, i) => (
                   <RecipeCard key={recipe.name} recipe={recipe} onViewRecipe={setSelectedRecipe} onOrder={handleOrder} onSave={handleSave} isSaved={savedRecipes.includes(recipe.name)} index={i} />
                 ))}
+              </div>
+              
+              <div className="mt-10 text-center">
+                <button 
+                  onClick={fetchAIRecipes} 
+                  disabled={loadingNormal}
+                  className="px-6 py-3 rounded-full border-2 border-primary/20 text-primary font-semibold hover:bg-primary/5 transition-colors inline-flex items-center gap-2 disabled:opacity-50"
+                >
+                  {loadingNormal ? <span className="spinner w-4 h-4" /> : "Invent more with AI"}
+                </button>
               </div>
             </>
           )}

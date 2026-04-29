@@ -168,14 +168,31 @@ The average missing ingredient basket is small (2–4 items, ₹80–200) but th
 
 > Instamart MCP credentials have been applied for via the Swiggy Builders Club programme. Integration will be completed within 48 hours of provisioning.
 
+## Getting Started
+
+To run the full Last-Minute Chef experience, you need to start both the Python-based ML recipe recommendation engine and the Next.js frontend.
+
+### 1. Prerequisites
+Ensure you have the required Python dependencies installed for the ML engine. Running it this way ensures it installs to the exact Python version you will be using:
+```bash
+python3 -m pip install pandas scikit-learn
+```
+
+### 2. Start the ML Recipe Engine (Python)
+The ML engine provides dataset-backed recipe recommendations. Start it from the root directory:
+```bash
+python3 files/recipe_server.py
+```
+*The server will run on `http://localhost:5001`. Keep this terminal open.*
+
+### 3. Start the Next.js Frontend
+In a separate terminal, start the Next.js development server:
+```bash
+npm run dev
+```
+*The app will be available at `http://localhost:3000`.*
+
 ---
 
-## Open Questions
-
-Issues are tracked for the following pre-build decisions:
-
-- [ ] **OQ-1** — Auth model: Swiggy SSO flow confirmation
-- [ ] **OQ-2** — Product matching: tiebreaker logic for multiple Instamart SKUs
-- [ ] **OQ-3** — Location: GPS auto-detect vs manual pin vs Swiggy account inherit
-- [ ] **OQ-4** — Rate limits: `search_products` call budget per session
-- [ ] **OQ-7** — Cart merge: add to existing cart vs new cart prompt
+## Technical Details: The Pipeline
+... existing content ...
