@@ -16,6 +16,16 @@ Last-Minute Chef is an intelligent recipe discovery platform designed for the In
 - **Instamart Integration**: Get real-time price estimates for missing ingredients and prepare your shopping cart.
 - **Dietary Filters**: Support for Vegetarian, Vegan, Jain, and more.
 
+## 📸 Screenshots
+
+<div align="center">
+  <img src="public/screenshot-1.png" alt="Hero Section" width="800" />
+  <br />
+  <img src="public/screenshot-2.png" alt="Recipe Cards" width="800" />
+  <br />
+  <img src="public/screenshot-3.png" alt="Recipe Details" width="800" />
+</div>
+
 ## 🛠 Tech Stack
 
 - **Frontend**: Next.js 15, TypeScript, Tailwind CSS
