@@ -24,6 +24,7 @@ export default function Home() {
   const [showCart, setShowCart] = useState(false);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [pendingOrder, setPendingOrder] = useState<Recipe | null>(null);
+  const [pendingSave, setPendingSave] = useState<Recipe | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const [loadingNormal, setLoadingNormal] = useState(false);
@@ -130,9 +131,15 @@ export default function Home() {
     setIsAuthenticated(true);
     setShowAuth(false);
     if (pendingOrder) { handleOrder(pendingOrder); setPendingOrder(null); }
+    if (pendingSave) { handleSave(pendingSave); setPendingSave(null); }
   };
 
   const handleSave = (recipe: Recipe) => {
+    if (!isAuthenticated) {
+      setPendingSave(recipe);
+      setShowAuth(true);
+      return;
+    }
     setSavedRecipes((prev) => prev.includes(recipe.name) ? prev.filter((n) => n !== recipe.name) : [...prev, recipe.name]);
   };
 
@@ -232,7 +239,7 @@ export default function Home() {
 
       {/* Modals */}
       {selectedRecipe && <RecipeDetail recipe={selectedRecipe} onClose={() => setSelectedRecipe(null)} onOrderMissing={handleOrder} />}
-      <AuthModal isOpen={showAuth} onClose={() => { setShowAuth(false); setPendingOrder(null); }} onAuthenticated={handleAuthenticated} />
+      <AuthModal isOpen={showAuth} onClose={() => { setShowAuth(false); setPendingOrder(null); setPendingSave(null); }} onAuthenticated={handleAuthenticated} />
       <CartSidebar isOpen={showCart} onClose={() => setShowCart(false)} items={cartItems} onRemove={(name) => setCartItems((prev) => prev.filter((i) => i.name !== name))} onCheckout={handleCheckout} />
     </>
   );

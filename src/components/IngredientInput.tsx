@@ -52,7 +52,7 @@ export default function IngredientInput({ ingredients, onIngredientsChange, disa
             <button onClick={(e) => { e.stopPropagation(); remove(ing); }} className="w-4 h-4 rounded-full flex items-center justify-center hover:bg-primary/15 transition-colors text-xs text-primary-dark" disabled={disabled}>×</button>
           </span>
         ))}
-        <input ref={inputRef} type="text" value={inputValue} onChange={(e) => { setInputValue(e.target.value); setShowSuggestions(e.target.value.length > 0); }} onFocus={() => setShowSuggestions(inputValue.length > 0)} onBlur={() => setTimeout(() => setShowSuggestions(false), 200)} onKeyDown={handleKeyDown} placeholder={ingredients.length === 0 ? "Type an ingredient and press Enter..." : "Add more..."} className="flex-1 min-w-[150px] bg-transparent border-none outline-none text-on-surface placeholder:text-outline text-sm" disabled={disabled} id="ingredient-input" />
+        <input ref={inputRef} type="text" value={inputValue} onChange={(e) => { setInputValue(e.target.value); setShowSuggestions(e.target.value.length > 0); }} onFocus={() => setShowSuggestions(inputValue.length > 0)} onBlur={() => setTimeout(() => setShowSuggestions(false), 200)} onKeyDown={handleKeyDown} placeholder={ingredients.length === 0 ? "Type an ingredient and press Enter..." : "Add more..."} className="flex-1 min-w-[150px] bg-transparent border-none outline-none focus:outline-none focus:ring-0 text-on-surface placeholder:text-outline text-sm" disabled={disabled} id="ingredient-input" />
       </div>
       {showSuggestions && filtered.length > 0 && (
         <div className="absolute top-full left-0 right-0 mt-2 bg-surface-container-lowest rounded-xl overflow-hidden z-40 shadow-ambient-3 border border-outline-variant/15">

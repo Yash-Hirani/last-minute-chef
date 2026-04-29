@@ -51,7 +51,7 @@ export default function AuthModal({ isOpen, onClose, onAuthenticated }: Props) {
               <label className="block text-sm font-semibold text-on-surface mb-2">Phone Number</label>
               <div className="flex gap-2 input-well px-4 py-3">
                 <span className="text-on-surface-variant font-medium text-sm">+91</span>
-                <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))} placeholder="Enter your number" className="flex-1 bg-transparent outline-none text-on-surface text-sm placeholder:text-outline" id="phone-input" autoFocus />
+                <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))} placeholder="Enter your number" className="flex-1 bg-transparent outline-none focus:outline-none focus:ring-0 text-on-surface text-sm placeholder:text-outline" id="phone-input" autoFocus />
               </div>
             </div>
             <button onClick={handleGetOtp} disabled={phone.length < 10 || loading} className="btn-primary w-full py-3 text-sm flex items-center justify-center gap-2">
@@ -63,7 +63,7 @@ export default function AuthModal({ isOpen, onClose, onAuthenticated }: Props) {
             <p className="text-sm text-center text-on-surface-variant">OTP sent to +91 {phone}</p>
             <div>
               <label className="block text-sm font-semibold text-on-surface mb-2">Enter OTP</label>
-              <input type="text" value={otp} onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 4))} placeholder="4-digit OTP" className="input-well w-full px-4 py-3 bg-transparent text-center text-on-surface text-lg tracking-[0.5em] font-bold placeholder:text-outline placeholder:tracking-normal placeholder:text-sm placeholder:font-normal outline-none" id="otp-input" maxLength={4} autoFocus />
+              <input type="text" value={otp} onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 4))} placeholder="4-digit OTP" className="input-well w-full px-4 py-3 bg-transparent text-center text-on-surface text-lg tracking-[0.5em] font-bold placeholder:text-outline placeholder:tracking-normal placeholder:text-sm placeholder:font-normal outline-none focus:outline-none focus:ring-0" id="otp-input" maxLength={4} autoFocus />
             </div>
             <button onClick={handleVerify} disabled={otp.length < 4 || loading} className="btn-primary w-full py-3 text-sm flex items-center justify-center gap-2">
               {loading ? <span className="spinner w-5 h-5" /> : "Verify & Continue"}
