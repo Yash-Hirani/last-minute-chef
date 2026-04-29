@@ -72,7 +72,7 @@ export async function POST(req: NextRequest) {
         recipeIngredients.push({ name, quantity: "to taste", available: false });
       });
 
-      // Fetch mock Instamart prices for missing ingredients
+      // Calculate estimated Instamart prices for missing ingredients
       const products = searchProducts(r.missing_ingredients);
       const missingCost = products.reduce((sum, p) => sum + p.price, 0);
 

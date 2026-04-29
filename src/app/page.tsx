@@ -158,7 +158,7 @@ export default function Home() {
             {/* Powered by badge */}
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-surface-container-lowest border border-outline-variant/20 text-xs text-on-surface-variant mb-6 shadow-ambient-1">
               <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-              Dataset-backed · Prices from Instamart
+              According to Indian taste · Prices from Instamart
             </div>
 
             <h1 className="font-[var(--font-display)] text-4xl sm:text-5xl lg:text-6xl font-bold text-on-surface leading-[1.15] mb-3">
@@ -167,7 +167,7 @@ export default function Home() {
               <span className="text-primary">Order what you don&apos;t.</span>
             </h1>
             <p className="text-base sm:text-lg text-on-surface-variant max-w-xl mx-auto leading-relaxed mb-10">
-              Enter your ingredients, set your preferences, and get fast dataset-backed recipes with live Instamart pricing for anything you&apos;re missing.
+              Enter your ingredients, set your preferences, and get Indian recipes with live Instamart pricing for anything you&apos;re missing.
             </p>
 
             {/* Input area */}

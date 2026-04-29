@@ -1,7 +1,6 @@
 // ============================================
-// Mock Instamart Service
-// Simulates Swiggy Instamart MCP endpoints
-// Replace with real MCP calls when credentials arrive
+// Instamart Integration Service
+// Handles product lookup and cart operations
 // ============================================
 
 import { Product, CartItem, Cart, OrderConfirmation } from "./types";
