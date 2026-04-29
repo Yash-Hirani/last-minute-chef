@@ -103,38 +103,33 @@ function generateId(): string {
   return Math.random().toString(36).substring(2, 10);
 }
 
+import { getPrice } from "./ingredient_pricer";
+
 export function searchProduct(ingredientName: string): Product {
   const key = ingredientName.toLowerCase().trim();
+  const pricingResult = getPrice(ingredientName);
+  
+  let imageUrl = "/products/default.webp";
 
-  // Direct match
+  // Check if we have a specific image in our small PRODUCT_DATABASE
   if (PRODUCT_DATABASE[key]) {
-    return {
-      ...PRODUCT_DATABASE[key],
-      id: generateId(),
-      ingredientMatch: ingredientName,
-    };
-  }
-
-  // Partial match — check if any key is contained in the query or vice versa
-  for (const [dbKey, product] of Object.entries(PRODUCT_DATABASE)) {
-    if (key.includes(dbKey) || dbKey.includes(key)) {
-      return {
-        ...product,
-        id: generateId(),
-        ingredientMatch: ingredientName,
-      };
+    imageUrl = PRODUCT_DATABASE[key].imageUrl;
+  } else {
+    for (const [dbKey, product] of Object.entries(PRODUCT_DATABASE)) {
+      if (key.includes(dbKey) || dbKey.includes(key)) {
+        imageUrl = product.imageUrl;
+        break;
+      }
     }
   }
 
-  // Fallback — generate a reasonable product entry
-  const estimatedPrice = 30 + Math.floor(Math.random() * 50);
   return {
     id: generateId(),
-    name: ingredientName.charAt(0).toUpperCase() + ingredientName.slice(1),
-    brand: "Local",
-    price: estimatedPrice,
-    unit: "1 pack",
-    imageUrl: "/products/default.webp",
+    name: pricingResult.ingredient.charAt(0).toUpperCase() + pricingResult.ingredient.slice(1),
+    brand: pricingResult.brand,
+    price: pricingResult.price,
+    unit: pricingResult.unit,
+    imageUrl,
     ingredientMatch: ingredientName,
   };
 }

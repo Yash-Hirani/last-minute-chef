@@ -106,10 +106,10 @@ export default function RecipeDetail({ recipe, onClose, onOrderMissing }: Props)
               <div className="bg-surface-container-low rounded-xl p-4">
                 <div className="flex justify-between items-center mb-3">
                   <span className="text-sm font-medium text-on-surface">Total to order</span>
-                  <span className="text-xl font-bold text-primary">₹{recipe.estimatedCost || 0}</span>
+                  <span className="text-xl font-bold text-primary">₹{recipe.missingCost || 0}</span>
                 </div>
                 <button onClick={() => onOrderMissing(recipe)} className="btn-primary w-full py-3 text-sm">
-                  Order {missing.length} Missing Item{missing.length > 1 ? "s" : ""}
+                  Order using Instamart
                 </button>
                 <p className="text-center text-xs text-on-surface-variant mt-2">⚡ Delivery in 15-25 minutes</p>
               </div>

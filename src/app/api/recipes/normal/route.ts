@@ -93,7 +93,6 @@ export async function POST(req: NextRequest) {
         nutrition: { calories: 350, protein: "12g", carbs: "45g", fat: "10g" },
         matchPercentage: r.match_pct,
         missingCost,
-        missingProducts: products,
       };
     });
 

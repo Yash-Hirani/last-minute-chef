@@ -61,7 +61,10 @@ export default function Home() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ingredients, dietary: filters.dietary, allergies: filters.allergies, mealType: filters.mealType }),
       });
-      if (!res.ok) throw new Error("Failed to generate AI recipes");
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || "Failed to generate AI recipes");
+      }
       
       const reader = res.body?.getReader();
       const decoder = new TextDecoder("utf-8");
@@ -92,9 +95,16 @@ export default function Home() {
           }
         }
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      setError("Failed to generate AI recipes.");
+      // Clean up the error message to remove the long prefix if it's a Gemini error
+      let errMsg = err?.message || "Failed to generate AI recipes.";
+      if (errMsg.includes("503 Service Unavailable")) {
+        errMsg = "Google's AI is currently experiencing high demand. Please try again in a moment.";
+      } else if (errMsg.includes("[GoogleGenerativeAI Error]:")) {
+        errMsg = errMsg.split("] ").pop() || errMsg;
+      }
+      setError(errMsg);
     } finally {
       setLoadingNormal(false);
     }

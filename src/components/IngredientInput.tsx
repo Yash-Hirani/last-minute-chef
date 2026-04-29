@@ -64,7 +64,28 @@ export default function IngredientInput({ ingredients, onIngredientsChange, disa
         </div>
       )}
       <div className="flex items-center justify-between mt-2">
-        <p className="text-xs text-on-surface-variant">{ingredients.length === 0 ? "Start typing to see suggestions" : `${ingredients.length} ingredient${ingredients.length > 1 ? "s" : ""} added`}</p>
+        <div className="flex items-center gap-3">
+          <p className="text-xs text-on-surface-variant">{ingredients.length === 0 ? "Start typing to see suggestions" : `${ingredients.length} ingredient${ingredients.length > 1 ? "s" : ""} added`}</p>
+          <button 
+            onClick={() => {
+              const basicSpices = ["salt", "cooking oil", "turmeric", "red chili powder", "cumin", "coriander powder"];
+              const newIngredients = [...ingredients];
+              let added = false;
+              basicSpices.forEach(spice => {
+                if (!newIngredients.includes(spice)) {
+                  newIngredients.push(spice);
+                  added = true;
+                }
+              });
+              if (added) onIngredientsChange(newIngredients);
+            }} 
+            className="text-xs text-primary font-medium hover:underline transition-all" 
+            disabled={disabled}
+            title="Adds salt, cooking oil, turmeric, red chili powder, cumin, and coriander powder"
+          >
+            + Add Basic Indian Pantry
+          </button>
+        </div>
         {ingredients.length > 0 && <button onClick={() => onIngredientsChange([])} className="text-xs text-error hover:text-error/80 transition-colors font-medium" disabled={disabled}>Clear all</button>}
       </div>
     </div>

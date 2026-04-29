@@ -83,14 +83,14 @@ export default function RecipeCard({ recipe, onViewRecipe, onOrder, onSave, isSa
       <div className="px-5 py-4 border-t border-outline-variant/15 bg-surface-container-low/50 flex items-center justify-between gap-3">
         <div className="flex items-center gap-3 text-xs text-on-surface-variant">
           <span>Missing {missingItems.length} item{missingItems.length !== 1 ? "s" : ""}</span>
-          {recipe.estimatedCost && (
-            <span className="font-bold text-primary text-sm">₹{recipe.estimatedCost}</span>
+          {recipe.missingCost > 0 && (
+            <span className="font-bold text-primary text-sm">~₹{recipe.missingCost}</span>
           )}
         </div>
         <div className="flex gap-2">
           <button onClick={() => onViewRecipe(recipe)} className="btn-ghost px-4 py-2 text-sm">View Recipe</button>
           <button onClick={() => onOrder(recipe)} className="btn-primary px-4 py-2 text-sm">
-            Order {recipe.estimatedCost ? `₹${recipe.estimatedCost}` : ""}
+            Order using Instamart
           </button>
         </div>
       </div>

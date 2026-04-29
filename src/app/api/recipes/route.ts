@@ -123,7 +123,6 @@ export async function POST(request: NextRequest) {
                 nutrition: recipe.nutrition || { calories: 0, protein: "0g", carbs: "0g", fat: "0g" },
                 matchPercentage,
                 missingCost,
-                missingProducts: products,
               };
               
               controller.enqueue(encoder.encode(JSON.stringify(enrichedRecipe) + "\n"));
@@ -146,10 +145,10 @@ export async function POST(request: NextRequest) {
       }
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("Recipe generation error:", error);
     return new Response(
-      JSON.stringify({ error: "Failed to generate recipes. Please try again." }),
+      JSON.stringify({ error: error?.message || "Failed to generate recipes. Please try again." }),
       { status: 500, headers: { "Content-Type": "application/json" } }
     );
   }
