@@ -6,6 +6,7 @@ import { NextRequest } from "next/server";
 import { generateRecipesStream } from "@/lib/gemini";
 import { searchProducts } from "@/lib/instamart";
 import { Recipe, Ingredient } from "@/lib/types";
+import { checkRateLimit } from "@/lib/rateLimit";
 
 function generateId(): string {
   return Math.random().toString(36).substring(2, 10);
@@ -63,13 +64,39 @@ function getCompleteObjects(jsonStr: string): any[] {
 
 export async function POST(request: NextRequest) {
   try {
+    // ── Rate limiting ────────────────────────────────────────────────────
+    const ip =
+      request.headers.get("x-forwarded-for")?.split(",")[0].trim() ||
+      request.headers.get("x-real-ip") ||
+      "anonymous";
+
+    const rateLimitResult = checkRateLimit(ip);
+    const rateLimitHeaders = {
+      "X-RateLimit-Limit": "3",
+      "X-RateLimit-Remaining": String(rateLimitResult.remaining),
+      "X-RateLimit-Reset": String(rateLimitResult.resetAt),
+    };
+
+    if (!rateLimitResult.allowed) {
+      const resetDate = new Date(rateLimitResult.resetAt);
+      return new Response(
+        JSON.stringify({
+          error: `You've used all 3 free AI recipe generations. Your limit resets at ${resetDate.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}.`,
+          rateLimitExceeded: true,
+          resetAt: rateLimitResult.resetAt,
+        }),
+        { status: 429, headers: { "Content-Type": "application/json", ...rateLimitHeaders } }
+      );
+    }
+    // ─────────────────────────────────────────────────────────────────────
+
     const body = await request.json();
     const { ingredients, dietary, allergies, mealType } = body;
 
     if (!ingredients || !Array.isArray(ingredients) || ingredients.length === 0) {
       return new Response(
         JSON.stringify({ error: "At least one ingredient is required" }),
-        { status: 400, headers: { "Content-Type": "application/json" } }
+        { status: 400, headers: { "Content-Type": "application/json", ...rateLimitHeaders } }
       );
     }
 
@@ -141,8 +168,9 @@ export async function POST(request: NextRequest) {
       headers: {
         "Content-Type": "application/x-ndjson",
         "Cache-Control": "no-cache",
-        "Connection": "keep-alive"
-      }
+        "Connection": "keep-alive",
+        ...rateLimitHeaders,
+      },
     });
 
   } catch (error: any) {

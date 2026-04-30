@@ -28,6 +28,7 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
 
   const [loadingNormal, setLoadingNormal] = useState(false);
+  const [aiUsesLeft, setAiUsesLeft] = useState<number | null>(null); // null = not yet fetched
 
   const findRecipes = async () => {
     if (ingredients.length === 0) return;
@@ -55,6 +56,7 @@ export default function Home() {
 
   const fetchAIRecipes = async () => {
     if (ingredients.length === 0) return;
+    if (aiUsesLeft !== null && aiUsesLeft <= 0) return;
     setLoadingNormal(true);
     try {
       const res = await fetch("/api/recipes", {
@@ -62,8 +64,16 @@ export default function Home() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ingredients, dietary: filters.dietary, allergies: filters.allergies, mealType: filters.mealType }),
       });
+
+      // Read remaining count from headers (present on all responses)
+      const remaining = res.headers.get("X-RateLimit-Remaining");
+      if (remaining !== null) setAiUsesLeft(parseInt(remaining, 10));
+
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}));
+        if (res.status === 429) {
+          setAiUsesLeft(0);
+        }
         throw new Error(errorData.error || "Failed to generate AI recipes");
       }
       
@@ -98,7 +108,6 @@ export default function Home() {
       }
     } catch (err: any) {
       console.error(err);
-      // Clean up the error message to remove the long prefix if it's a Gemini error
       let errMsg = err?.message || "Failed to generate AI recipes.";
       if (errMsg.includes("503 Service Unavailable")) {
         errMsg = "Google's AI is currently experiencing high demand. Please try again in a moment.";
@@ -215,14 +224,23 @@ export default function Home() {
                 ))}
               </div>
               
-              <div className="mt-10 text-center">
+              <div className="mt-10 text-center space-y-2">
                 <button 
                   onClick={fetchAIRecipes} 
-                  disabled={loadingNormal}
-                  className="px-6 py-3 rounded-full border-2 border-primary/20 text-primary font-semibold hover:bg-primary/5 transition-colors inline-flex items-center gap-2 disabled:opacity-50"
+                  disabled={loadingNormal || (aiUsesLeft !== null && aiUsesLeft <= 0)}
+                  className="px-6 py-3 rounded-full border-2 border-primary/20 text-primary font-semibold hover:bg-primary/5 transition-colors inline-flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {loadingNormal ? <span className="spinner w-4 h-4" /> : "Invent more with AI"}
+                  {loadingNormal ? <span className="spinner w-4 h-4" /> : "✨ Invent more with AI"}
                 </button>
+                {/* Quota badge */}
+                {aiUsesLeft !== null && (
+                  <p className="text-xs text-on-surface-variant">
+                    {aiUsesLeft > 0
+                      ? <><span className="font-semibold text-primary">{aiUsesLeft}</span> AI generation{aiUsesLeft !== 1 ? "s" : ""} remaining today</>
+                      : <span className="text-error font-medium">Daily AI limit reached — resets in 24 h</span>
+                    }
+                  </p>
+                )}
               </div>
             </>
           )}
