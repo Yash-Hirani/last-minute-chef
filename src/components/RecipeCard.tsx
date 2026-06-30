@@ -98,8 +98,8 @@ export default function RecipeCard({ recipe, onViewRecipe, onOrder, onSave, isSa
 
         {/* Ingredient pills */}
         <div className="flex flex-wrap gap-1.5 mb-3">
-          {recipe.ingredients.filter((i) => i.available).slice(0, 5).map((ing) => (
-            <span key={ing.name} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-secondary/8 text-secondary border border-secondary/15">
+          {recipe.ingredients.filter((i) => i.available).slice(0, 5).map((ing, idx) => (
+            <span key={`${ing.name}-${idx}`} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-secondary/8 text-secondary border border-secondary/15">
               <span className="text-secondary">✓</span> {ing.name}
             </span>
           ))}
@@ -108,8 +108,8 @@ export default function RecipeCard({ recipe, onViewRecipe, onOrder, onSave, isSa
           )}
         </div>
         <div className="flex flex-wrap gap-1.5 mb-3">
-          {missingItems.slice(0, 3).map((ing) => (
-            <span key={ing.name} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-error/8 text-error border border-error/15">
+          {missingItems.slice(0, 3).map((ing, idx) => (
+            <span key={`${ing.name}-${idx}`} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-error/8 text-error border border-error/15">
               <span>✕</span> {ing.name}
             </span>
           ))}

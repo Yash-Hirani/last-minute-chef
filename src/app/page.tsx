@@ -271,7 +271,7 @@ export default function Home() {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 {sortedRecipes.map((recipe, i) => (
-                  <RecipeCard key={recipe.name} recipe={recipe} onViewRecipe={setSelectedRecipe} onOrder={handleOrder} onSave={handleSave} isSaved={savedRecipes.includes(recipe.name)} index={i} />
+                  <RecipeCard key={recipe.id} recipe={recipe} onViewRecipe={setSelectedRecipe} onOrder={handleOrder} onSave={handleSave} isSaved={savedRecipes.includes(recipe.name)} index={i} />
                 ))}
               </div>
               

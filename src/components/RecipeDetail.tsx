@@ -57,8 +57,8 @@ export default function RecipeDetail({ recipe, onClose, onOrderMissing }: Props)
             <div className="bg-surface-container-low rounded-xl p-4">
               <h4 className="font-[var(--font-display)] text-sm font-bold text-on-surface mb-3 uppercase tracking-wide">Have ({available.length})</h4>
               <div className="space-y-2 mb-4">
-                {available.map((ing) => (
-                  <div key={ing.name} className="flex justify-between items-center text-sm">
+                {recipe.ingredients.filter((i) => i.available).map((ing, idx) => (
+                  <div key={`${ing.name}-${idx}`} className="flex justify-between items-center text-sm">
                     <span className="flex items-center gap-2 text-on-surface"><span className="text-secondary">✓</span> {ing.name}</span>
                     <span className="text-on-surface-variant text-xs">{ing.quantity}</span>
                   </div>
@@ -69,8 +69,8 @@ export default function RecipeDetail({ recipe, onClose, onOrderMissing }: Props)
                 <>
                   <h4 className="text-xs font-bold text-error uppercase tracking-wide mb-3">Missing ({missing.length})</h4>
                   <div className="space-y-2">
-                    {missing.map((ing) => (
-                      <div key={ing.name} className="flex justify-between items-center text-sm">
+                    {recipe.ingredients.filter((i) => !i.available).map((ing, idx) => (
+                      <div key={`${ing.name}-${idx}`} className="flex justify-between items-center text-sm">
                         <span className="flex items-center gap-2 text-on-surface"><span className="text-error">✕</span> {ing.name}</span>
                         <span className="text-on-surface-variant text-xs">{ing.quantity}</span>
                       </div>
