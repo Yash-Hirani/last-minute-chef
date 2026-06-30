@@ -13,9 +13,10 @@ interface Props {
   ingredients: string[];
   onIngredientsChange: (ingredients: string[]) => void;
   disabled?: boolean;
+  onOpenExplorer?: () => void;
 }
 
-export default function IngredientInput({ ingredients, onIngredientsChange, disabled = false }: Props) {
+export default function IngredientInput({ ingredients, onIngredientsChange, disabled = false, onOpenExplorer }: Props) {
   const [inputValue, setInputValue] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -64,11 +65,11 @@ export default function IngredientInput({ ingredients, onIngredientsChange, disa
         </div>
       )}
       <div className="flex items-center justify-between mt-2">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
           <p className="text-xs text-on-surface-variant">{ingredients.length === 0 ? "Start typing to see suggestions" : `${ingredients.length} ingredient${ingredients.length > 1 ? "s" : ""} added`}</p>
           <button 
             onClick={() => {
-              const basicSpices = ["salt", "cooking oil", "turmeric", "red chili powder", "cumin", "coriander powder"];
+              const basicSpices = ["salt", "cooking oil", "turmeric", "red chilli powder", "cumin seeds", "coriander powder"];
               const newIngredients = [...ingredients];
               let added = false;
               basicSpices.forEach(spice => {
@@ -81,10 +82,20 @@ export default function IngredientInput({ ingredients, onIngredientsChange, disa
             }} 
             className="text-xs text-primary font-medium hover:underline transition-all" 
             disabled={disabled}
-            title="Adds salt, cooking oil, turmeric, red chili powder, cumin, and coriander powder"
+            title="Adds salt, cooking oil, turmeric, red chilli powder, cumin, and coriander powder"
           >
             + Add Basic Indian Pantry
           </button>
+          <span className="text-outline-variant/40 hidden sm:inline">•</span>
+          {onOpenExplorer && (
+            <button
+              onClick={onOpenExplorer}
+              className="text-xs text-primary font-bold hover:underline transition-all"
+              disabled={disabled}
+            >
+              Browse all →
+            </button>
+          )}
         </div>
         {ingredients.length > 0 && <button onClick={() => onIngredientsChange([])} className="text-xs text-error hover:text-error/80 transition-colors font-medium" disabled={disabled}>Clear all</button>}
       </div>
