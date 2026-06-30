@@ -20,7 +20,7 @@ export interface Recipe {
   name: string;
   cuisine: string;
   cookTime: string;
-  difficulty: "Easy" | "Medium" | "Hard";
+  difficulty: string;
   servings: number;
   description: string;
   ingredients: Ingredient[];
@@ -29,6 +29,10 @@ export interface Recipe {
   matchPercentage: number;
   missingCost: number;
   estimatedCost?: number;
+  taste?: string;
+  healthLevel?: string;
+  cookSpeed?: string;
+  course?: string;
 }
 
 export interface RecipeRequest {
@@ -67,6 +71,10 @@ export interface Filters {
   dietary: string[];
   allergies: string[];
   mealType: string;
+  cuisine: string;
+  courseType: string;
+  tasteProfile: string;
+  healthLevel: string;
 }
 
 export interface OrderConfirmation {
@@ -100,3 +108,5 @@ export type MealType =
   | "Lunch"
   | "Dinner"
   | "Snack";
+
+export type SortMode = "match" | "cost" | "missing";

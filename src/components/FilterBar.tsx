@@ -9,14 +9,16 @@ interface Props {
   onToggle: () => void;
 }
 
-const DIETARY = ["Vegetarian", "Vegan", "Eggetarian", "Non-Veg"];
-const ALLERGIES = ["Gluten", "Dairy", "Nuts", "Shellfish", "Soy"];
-const MEAL_TYPES = ["Any", "Breakfast", "Lunch", "Dinner", "Snack"];
+const CUISINES = ["Any", "American", "Asian", "Indian", "Italian", "French", "Korean", "Thai", "Mediterranean", "Mexican"];
+const COURSES = ["Any", "Main", "Breakfast", "Dessert", "Snack", "Soup", "Side", "Appetizer"];
+const TASTES = ["Any", "Savory", "Sweet", "Spicy", "Umami", "Sour", "Bitter"];
+const HEALTH_LEVELS = ["Any", "Healthy", "Moderate", "Unhealthy"];
+const DIETARY = ["Vegetarian", "Vegan", "Halal", "Kosher", "Dairy-Free", "Gluten-Free", "Nut-Free"];
 
 export default function FilterBar({ filters, onFiltersChange, isVisible, onToggle }: Props) {
-  const toggle = (key: "dietary" | "allergies", val: string) => {
-    const arr = filters[key];
-    onFiltersChange({ ...filters, [key]: arr.includes(val) ? arr.filter((v) => v !== val) : [...arr, val] });
+  const toggleDietary = (val: string) => {
+    const arr = filters.dietary;
+    onFiltersChange({ ...filters, dietary: arr.includes(val) ? arr.filter((v) => v !== val) : [...arr, val] });
   };
 
   return (
@@ -27,48 +29,78 @@ export default function FilterBar({ filters, onFiltersChange, isVisible, onToggl
       </button>
 
       {isVisible && (
-        <div className="mt-3 space-y-4 animate-fade-up p-5 bg-surface-container-low rounded-2xl">
-          {/* Dietary */}
+        <div className="mt-3 space-y-5 animate-fade-up p-5 bg-surface-container-low rounded-2xl max-h-[60vh] overflow-y-auto no-scrollbar border border-outline-variant/10 shadow-ambient-1">
+          
+          {/* Cuisine */}
           <div>
-            <p className="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-2">Diet</p>
+            <p className="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-2">Cuisine</p>
             <div className="flex flex-wrap gap-2">
-              {DIETARY.map((d) => (
-                <button key={d} onClick={() => toggle("dietary", d)} className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all border ${
-                  filters.dietary.includes(d)
+              {CUISINES.map((c) => (
+                <button key={c} onClick={() => onFiltersChange({ ...filters, cuisine: c })} className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all border ${
+                  filters.cuisine === c
+                    ? "bg-primary text-on-primary border-primary shadow-sm shadow-primary/15"
+                    : "bg-surface-container-lowest text-on-surface-variant border-outline-variant/30 hover:border-primary/30 hover:bg-primary/5"
+                }`}>{c}</button>
+              ))}
+            </div>
+          </div>
+
+          {/* Course */}
+          <div>
+            <p className="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-2">Course Type</p>
+            <div className="flex flex-wrap gap-2">
+              {COURSES.map((c) => (
+                <button key={c} onClick={() => onFiltersChange({ ...filters, courseType: c })} className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all border ${
+                  filters.courseType === c
+                    ? "bg-primary text-on-primary border-primary shadow-sm shadow-primary/15"
+                    : "bg-surface-container-lowest text-on-surface-variant border-outline-variant/30 hover:border-primary/30 hover:bg-primary/5"
+                }`}>{c}</button>
+              ))}
+            </div>
+          </div>
+
+          {/* Taste */}
+          <div>
+            <p className="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-2">Taste Profile</p>
+            <div className="flex flex-wrap gap-2">
+              {TASTES.map((t) => (
+                <button key={t} onClick={() => onFiltersChange({ ...filters, tasteProfile: t })} className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all border ${
+                  filters.tasteProfile === t
                     ? "bg-secondary text-on-secondary border-secondary shadow-sm shadow-secondary/15"
                     : "bg-surface-container-lowest text-on-surface-variant border-outline-variant/30 hover:border-secondary/30 hover:bg-secondary/5"
+                }`}>{t}</button>
+              ))}
+            </div>
+          </div>
+
+          {/* Health Level */}
+          <div>
+            <p className="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-2">Health Level</p>
+            <div className="flex flex-wrap gap-2">
+              {HEALTH_LEVELS.map((h) => (
+                <button key={h} onClick={() => onFiltersChange({ ...filters, healthLevel: h })} className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all border ${
+                  filters.healthLevel === h
+                    ? "bg-tertiary text-on-tertiary border-tertiary shadow-sm shadow-tertiary/15"
+                    : "bg-surface-container-lowest text-on-surface-variant border-outline-variant/30 hover:border-tertiary/30 hover:bg-tertiary/5"
+                }`}>{h}</button>
+              ))}
+            </div>
+          </div>
+
+          {/* Dietary Restrictions (Multi-select) */}
+          <div>
+            <p className="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-2">Dietary & Allergies</p>
+            <div className="flex flex-wrap gap-2">
+              {DIETARY.map((d) => (
+                <button key={d} onClick={() => toggleDietary(d)} className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all border ${
+                  filters.dietary.includes(d)
+                    ? "bg-error text-on-error border-error shadow-sm shadow-error/15"
+                    : "bg-surface-container-lowest text-on-surface-variant border-outline-variant/30 hover:border-error/30 hover:bg-error/5"
                 }`}>{d}</button>
               ))}
             </div>
           </div>
 
-          {/* Allergies */}
-          <div>
-            <p className="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-2">Allergies</p>
-            <div className="flex flex-wrap gap-2">
-              {ALLERGIES.map((a) => (
-                <button key={a} onClick={() => toggle("allergies", a)} className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all border ${
-                  filters.allergies.includes(a)
-                    ? "bg-error text-on-error border-error shadow-sm shadow-error/15"
-                    : "bg-surface-container-lowest text-on-surface-variant border-outline-variant/30 hover:border-error/30 hover:bg-error/5"
-                }`}>{a}</button>
-              ))}
-            </div>
-          </div>
-
-          {/* Meal Type */}
-          <div>
-            <p className="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-2">Meal type</p>
-            <div className="flex flex-wrap gap-2">
-              {MEAL_TYPES.map((m) => (
-                <button key={m} onClick={() => onFiltersChange({ ...filters, mealType: m })} className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all border ${
-                  filters.mealType === m
-                    ? "bg-primary text-on-primary border-primary shadow-sm shadow-primary/15"
-                    : "bg-surface-container-lowest text-on-surface-variant border-outline-variant/30 hover:border-primary/30 hover:bg-primary/5"
-                }`}>{m}</button>
-              ))}
-            </div>
-          </div>
         </div>
       )}
     </div>
