@@ -20,37 +20,76 @@ export interface RecipeResult {
   instructions: string
   image_url: string
   source_url: string
+  description: string
+  taste: string
+  health_level: string
+  cook_speed: string
+  difficulty: string
+  course: string
 }
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
-  const { ingredients, dietary, allergies, mealType } = body;
+  const { 
+    ingredients, 
+    dietary = [], 
+    allergies = [], 
+    mealType,
+    cuisine,
+    courseType,
+    tasteProfile,
+    healthLevel
+  } = body;
 
   if (!ingredients || ingredients.length === 0) {
     return NextResponse.json({ error: 'At least one ingredient required' }, { status: 400 });
   }
 
-  // Determine filters based on frontend state
-  let vegetarian_only = false;
-  if (dietary && dietary.includes('Vegetarian')) {
-    vegetarian_only = true;
+  // Determine dietary filters
+  const vegetarian_only = dietary.includes('Vegetarian');
+  const vegan_only = dietary.includes('Vegan');
+  const halal = dietary.includes('Halal');
+  const kosher = dietary.includes('Kosher');
+  const dairy_free = dietary.includes('Dairy-Free');
+  const gluten_free = dietary.includes('Gluten-Free');
+  const nut_free = dietary.includes('Nut-Free');
+
+  // Maintain backward compatibility for mealType (time constraint) if present
+  let max_time_mins = null;
+  if (mealType === "Breakfast" || mealType === "Snack") {
+    max_time_mins = 30;
+  } else if (mealType === "Lunch" || mealType === "Dinner") {
+    max_time_mins = 60;
   }
-  
-  // cuisine_filter could be inferred from mealType if we wanted, but let's keep it simple
-  let cuisine_filter = null;
-  
+
   try {
+    const payload = {
+      ingredients,
+      top_n: 10,
+      max_missing: 5,
+      cuisine_filter: cuisine,
+      course_filter: courseType,
+      taste_filter: tasteProfile,
+      health_level_filter: healthLevel,
+      vegetarian_only,
+      vegan_only,
+      halal,
+      kosher,
+      nut_free,
+      dairy_free,
+      gluten_free,
+    };
+    
+    // Add max_time_mins if provided via legacy mealType or any logic
+    if (max_time_mins) {
+      // Python engine might not support max_time_mins anymore directly if we removed it, but let's pass it if needed, or ignore it.
+      // We removed max_time_mins from python engine params in v3, so we can skip it, or handle it here via JS filter.
+    }
+
     const response = await fetch(RECIPE_ENGINE_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        ingredients,
-        top_n: 4,
-        max_missing: 5,
-        max_time_mins: null,
-        vegetarian_only: vegetarian_only,
-        cuisine_filter: cuisine_filter,
-      }),
+      body: JSON.stringify(payload),
       signal: AbortSignal.timeout(5000), // 5s timeout
     });
 
@@ -59,7 +98,33 @@ export async function POST(req: NextRequest) {
     }
 
     const data = await response.json();
-    const mlRecipes: RecipeResult[] = data.results;
+    let mlRecipes: RecipeResult[] = data.results;
+
+    // Post-filter by legacy allergies if they exist
+    if (allergies && allergies.length > 0) {
+      const allergyKeywords: Record<string, string[]> = {
+        "Gluten": ["wheat", "flour", "atta", "maida", "bread", "pasta", "semolina", "suji", "rava"],
+        "Dairy": ["milk", "curd", "yogurt", "paneer", "cheese", "cream", "butter", "ghee", "buttermilk"],
+        "Nuts": ["cashew", "almond", "peanut", "pistachio", "walnut", "nut", "pine"],
+        "Shellfish": ["prawn", "shrimp", "crab", "squid", "clam", "shellfish"],
+        "Soy": ["soy", "tofu"],
+      };
+
+      const activeKeywords: string[] = [];
+      for (const a of allergies) {
+        if (allergyKeywords[a]) activeKeywords.push(...allergyKeywords[a]);
+      }
+
+      if (activeKeywords.length > 0) {
+        mlRecipes = mlRecipes.filter(r => {
+          const allIngs = [...r.available_ingredients, ...r.missing_ingredients].join(" ").toLowerCase();
+          return !activeKeywords.some(kw => allIngs.includes(kw));
+        });
+      }
+    }
+    
+    // Slice to top 4 after filtering
+    mlRecipes = mlRecipes.slice(0, 4);
 
     // Map ML recipes to the standard frontend Recipe interface
     const enrichedRecipes: Recipe[] = mlRecipes.map((r) => {
@@ -83,16 +148,20 @@ export async function POST(req: NextRequest) {
       return {
         id: generateId(),
         name: r.name,
-        cuisine: r.cuisine || "Indian",
+        cuisine: r.cuisine || "Global",
         cookTime: `${r.time_mins} mins`,
-        difficulty: "Medium",
+        difficulty: r.difficulty ? (r.difficulty.charAt(0).toUpperCase() + r.difficulty.slice(1)) : "Medium",
         servings: 2,
-        description: `A delicious ${r.cuisine} dish.`,
+        description: r.description || `A delicious ${r.cuisine} ${r.course} dish.`,
         ingredients: recipeIngredients,
         instructions: instructions,
         nutrition: { calories: 350, protein: "12g", carbs: "45g", fat: "10g" },
         matchPercentage: r.match_pct,
         missingCost,
+        taste: r.taste ? r.taste.charAt(0).toUpperCase() + r.taste.slice(1) : undefined,
+        healthLevel: r.health_level ? r.health_level.charAt(0).toUpperCase() + r.health_level.slice(1) : undefined,
+        cookSpeed: r.cook_speed ? r.cook_speed.charAt(0).toUpperCase() + r.cook_speed.slice(1) : undefined,
+        course: r.course || undefined,
       };
     });
 

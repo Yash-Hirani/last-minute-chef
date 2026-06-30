@@ -23,21 +23,61 @@ export default function RecipeCard({ recipe, onViewRecipe, onOrder, onSave, isSa
     Hard: "bg-error/10 text-error border-error/20",
   };
 
+  const tasteEmoji: Record<string, string> = {
+    Sweet: "🍬 Sweet",
+    Savory: "🥩 Savory",
+    Spicy: "🌶️ Spicy",
+    Umami: "🍄 Umami",
+    Sour: "🍋 Sour",
+    Bitter: "🌿 Bitter",
+  };
+
+  const healthColor: Record<string, string> = {
+    Healthy: "bg-tertiary/10 text-tertiary border-tertiary/20",
+    Moderate: "bg-surface-container text-on-surface-variant border-outline-variant/20",
+    Unhealthy: "bg-error/10 text-error border-error/20",
+  };
+
+  const getGradient = (cuisine: string) => {
+    const c = cuisine.toLowerCase();
+    if (c.includes("asian") || c.includes("chinese") || c.includes("korean")) return "from-orange-500 to-red-500";
+    if (c.includes("italian") || c.includes("mediterranean")) return "from-green-500 to-emerald-700";
+    if (c.includes("indian")) return "from-yellow-400 to-orange-500";
+    if (c.includes("french") || c.includes("european")) return "from-blue-400 to-indigo-500";
+    if (c.includes("american")) return "from-red-500 to-blue-500";
+    return "from-primary-light to-primary";
+  };
+
   return (
     <div className={`card p-0 overflow-hidden animate-fade-up delay-${index + 1}`}>
+      {/* Gradient Header */}
+      <div className={`h-2 w-full bg-gradient-to-r ${getGradient(recipe.cuisine)}`} />
+      
       {/* Card header */}
       <div className="p-5 pb-4">
         <div className="flex justify-between items-start mb-3">
           <div className="flex-1 mr-3">
-            <h3 className="font-[var(--font-display)] text-lg font-semibold text-on-surface leading-tight mb-1.5">{recipe.name}</h3>
-            <div className="flex items-center gap-2 text-xs text-on-surface-variant">
-              <span>{recipe.cuisine}</span>
-              <span className="w-1 h-1 rounded-full bg-outline-variant" />
+            <h3 className="font-[var(--font-display)] text-lg font-semibold text-on-surface leading-tight mb-2">{recipe.name}</h3>
+            <div className="flex flex-wrap items-center gap-2 text-xs text-on-surface-variant">
+              <span>{recipe.cuisine} {recipe.course ? `· ${recipe.course}` : ""}</span>
+              <span className="w-1 h-1 rounded-full bg-outline-variant hidden sm:inline-block" />
               <span>{recipe.cookTime}</span>
-              <span className="w-1 h-1 rounded-full bg-outline-variant" />
-              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${difficultyColor[recipe.difficulty] || "bg-surface-container text-on-surface-variant border-outline-variant/20"}`}>
-                {recipe.difficulty}
-              </span>
+              
+              <div className="w-full sm:w-auto flex items-center gap-2 mt-2 sm:mt-0">
+                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${difficultyColor[recipe.difficulty] || "bg-surface-container text-on-surface-variant border-outline-variant/20"}`}>
+                  {recipe.difficulty}
+                </span>
+                {recipe.taste && (
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-surface-container-high text-on-surface border border-outline-variant/20">
+                    {tasteEmoji[recipe.taste] || recipe.taste}
+                  </span>
+                )}
+                {recipe.healthLevel && (
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${healthColor[recipe.healthLevel] || "bg-surface-container text-on-surface-variant border-outline-variant/20"}`}>
+                    {recipe.healthLevel === "Healthy" ? "🟢 Healthy" : recipe.healthLevel === "Moderate" ? "🟡 Moderate" : "🔴 Unhealthy"}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
           <button onClick={() => onSave(recipe)} className={`p-2 rounded-full transition-all ${isSaved ? "text-primary bg-primary/10" : "text-outline hover:text-primary hover:bg-primary/5"}`} title={isSaved ? "Unsave" : "Save"}>

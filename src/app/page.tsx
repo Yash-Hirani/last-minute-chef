@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Header from "@/components/Header";
 import IngredientInput from "@/components/IngredientInput";
 import FilterBar from "@/components/FilterBar";
@@ -9,13 +9,25 @@ import RecipeDetail from "@/components/RecipeDetail";
 import ShimmerLoader from "@/components/ShimmerLoader";
 import AuthModal from "@/components/AuthModal";
 import CartSidebar from "@/components/CartSidebar";
-import { Recipe, Filters, CartItem } from "@/lib/types";
+import SortBar from "@/components/SortBar";
+import IngredientExplorer from "@/components/IngredientExplorer";
+import { Recipe, Filters, CartItem, SortMode } from "@/lib/types";
 
 export default function Home() {
   const [ingredients, setIngredients] = useState<string[]>([]);
-  const [filters, setFilters] = useState<Filters>({ dietary: [], allergies: [], mealType: "Any" });
+  const [filters, setFilters] = useState<Filters>({ 
+    dietary: [], 
+    allergies: [], 
+    mealType: "Any",
+    cuisine: "Any",
+    courseType: "Any",
+    tasteProfile: "Any",
+    healthLevel: "Any"
+  });
   const [showFilters, setShowFilters] = useState(false);
+  const [showExplorer, setShowExplorer] = useState(false);
   const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [sortMode, setSortMode] = useState<SortMode>("match");
   const [loading, setLoading] = useState(false);
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
   const [savedRecipes, setSavedRecipes] = useState<string[]>([]);
@@ -35,16 +47,26 @@ export default function Home() {
     setLoading(true);
     setError(null);
     setRecipes([]);
+    setSortMode("match");
     try {
       const res = await fetch("/api/recipes/normal", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ingredients, dietary: filters.dietary, allergies: filters.allergies, mealType: filters.mealType }),
+        body: JSON.stringify({ 
+          ingredients, 
+          dietary: filters.dietary, 
+          allergies: filters.allergies, 
+          mealType: filters.mealType,
+          cuisine: filters.cuisine,
+          courseType: filters.courseType,
+          tasteProfile: filters.tasteProfile,
+          healthLevel: filters.healthLevel
+        }),
       });
       if (!res.ok) throw new Error("Failed to fetch recipes");
       const data = await res.json();
       if (data.recipes) {
-        setRecipes(data.recipes.sort((a: Recipe, b: Recipe) => b.matchPercentage - a.matchPercentage));
+        setRecipes(data.recipes);
       }
     } catch (err) {
       console.error(err);
@@ -62,7 +84,16 @@ export default function Home() {
       const res = await fetch("/api/recipes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ingredients, dietary: filters.dietary, allergies: filters.allergies, mealType: filters.mealType }),
+        body: JSON.stringify({ 
+          ingredients, 
+          dietary: filters.dietary, 
+          allergies: filters.allergies, 
+          mealType: filters.mealType,
+          cuisine: filters.cuisine,
+          courseType: filters.courseType,
+          tasteProfile: filters.tasteProfile,
+          healthLevel: filters.healthLevel
+        }),
       });
 
       // Read remaining count from headers (present on all responses)
@@ -119,6 +150,21 @@ export default function Home() {
       setLoadingNormal(false);
     }
   };
+
+  const sortedRecipes = useMemo(() => {
+    return [...recipes].sort((a, b) => {
+      if (sortMode === "match") {
+        return b.matchPercentage - a.matchPercentage;
+      } else if (sortMode === "cost") {
+        return a.missingCost - b.missingCost;
+      } else if (sortMode === "missing") {
+        const missingA = a.ingredients.filter((i) => !i.available).length;
+        const missingB = b.ingredients.filter((i) => !i.available).length;
+        return missingA - missingB;
+      }
+      return 0;
+    });
+  }, [recipes, sortMode]);
 
   const handleOrder = (recipe: Recipe) => {
     if (!isAuthenticated) {
@@ -188,7 +234,12 @@ export default function Home() {
 
             {/* Input area */}
             <div className="max-w-xl mx-auto space-y-4 text-left">
-              <IngredientInput ingredients={ingredients} onIngredientsChange={setIngredients} disabled={loading} />
+              <IngredientInput 
+                ingredients={ingredients} 
+                onIngredientsChange={setIngredients} 
+                disabled={loading} 
+                onOpenExplorer={() => setShowExplorer(true)}
+              />
               <FilterBar filters={filters} onFiltersChange={setFilters} isVisible={showFilters} onToggle={() => setShowFilters(!showFilters)} />
               <button onClick={findRecipes} disabled={ingredients.length === 0 || loading} className="btn-primary w-full py-4 text-base font-semibold flex items-center justify-center gap-2">
                 {loading ? <span className="spinner w-5 h-5" /> : (
@@ -216,10 +267,10 @@ export default function Home() {
                 <h2 className="font-[var(--font-display)] text-xl font-bold text-on-surface">
                   <span className="text-primary">{recipes.length}</span> recipes found
                 </h2>
-                <span className="text-xs text-on-surface-variant font-medium">Ranked by ingredient match</span>
+                <SortBar currentSort={sortMode} onSortChange={setSortMode} />
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                {recipes.map((recipe, i) => (
+                {sortedRecipes.map((recipe, i) => (
                   <RecipeCard key={recipe.name} recipe={recipe} onViewRecipe={setSelectedRecipe} onOrder={handleOrder} onSave={handleSave} isSaved={savedRecipes.includes(recipe.name)} index={i} />
                 ))}
               </div>
@@ -256,6 +307,16 @@ export default function Home() {
       </main>
 
       {/* Modals */}
+      {showExplorer && (
+        <IngredientExplorer 
+          currentIngredients={ingredients}
+          onAddIngredients={(newIngs) => {
+            const merged = Array.from(new Set([...ingredients, ...newIngs]));
+            setIngredients(merged);
+          }}
+          onClose={() => setShowExplorer(false)}
+        />
+      )}
       {selectedRecipe && <RecipeDetail recipe={selectedRecipe} onClose={() => setSelectedRecipe(null)} onOrderMissing={handleOrder} />}
       <AuthModal isOpen={showAuth} onClose={() => { setShowAuth(false); setPendingOrder(null); setPendingSave(null); }} onAuthenticated={handleAuthenticated} />
       <CartSidebar isOpen={showCart} onClose={() => setShowCart(false)} items={cartItems} onRemove={(name) => setCartItems((prev) => prev.filter((i) => i.name !== name))} onCheckout={handleCheckout} />
