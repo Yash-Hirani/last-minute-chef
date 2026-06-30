@@ -1,45 +1,44 @@
 """
-Recipe Matching Engine v2 — Production Ready
+Recipe Matching Engine v3 — Extended Global Dataset
 =============================================
-Fixes over v1:
-- Strip parenthetical aliases from dataset: "potato (aloo)" → "potato"
-- Fix synonym double-application: "turmeric powder" no longer becomes "turmeric powder powder"
-- vegetarian filter fixed (was leaking mutton through word boundary bug)
-- Better match % for Hindi inputs
+Uses recipes_extended.json (62k recipes).
+TF-IDF is built on `ingredient_text`.
+Ingredient matching uses `ingredients_canonical`.
+Supports multiple new filters.
 """
 
-import pandas as pd
 import json
 import re
 import time
+import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
 # ── Synonym map: user input → dataset vocabulary ──────────────
+# We keep this because Indian users will still search "aloo", "paneer", etc.
 SYNONYMS = {
     "cilantro": "coriander", "dhaniya": "coriander",
-    "jeera": "cumin seeds", "zeera": "cumin seeds",
-    "haldi": "turmeric powder",                         # direct to final form
+    "jeera": "cumin", "zeera": "cumin",
+    "haldi": "turmeric",
     "hing": "asafoetida",
     "methi leaves": "fenugreek leaves",
     "methi": "fenugreek",
     "ajwain": "carom seeds",
-    "dalchini": "cinnamon powder",
+    "dalchini": "cinnamon",
     "elaichi": "cardamom",
     "laung": "cloves",
     "kali mirch": "black pepper",
-    "lal mirch": "red chilli powder",
-    "mirch": "chilli",
-    "saunf": "fennel seeds",
-    "amchur": "dry mango powder",
+    "lal mirch": "red pepper",
+    "mirch": "chili",
+    "saunf": "fennel",
+    "amchur": "dry mango",
     "kasuri methi": "dried fenugreek leaves",
-    "garam masala": "garam masala powder",
     "baingan": "eggplant", "brinjal": "eggplant",
-    "shimla mirch": "capsicum",
+    "shimla mirch": "bell pepper", "capsicum": "bell pepper",
     "karela": "bitter gourd",
     "lauki": "bottle gourd",
     "bhindi": "okra",
-    "matar": "green peas",
+    "matar": "peas",
     "palak": "spinach",
     "aloo": "potato",
     "gobi": "cauliflower",
@@ -64,71 +63,43 @@ SYNONYMS = {
     "imli": "tamarind",
     "sarso": "mustard",
     "saag": "spinach",
-    "kadhi": "curd",
+    "kadhi": "yogurt",
 }
-
-MEAT_KEYWORDS = frozenset([
-    'chicken', 'mutton', 'lamb', 'beef', 'pork', 'fish',
-    'prawn', 'shrimp', 'egg', 'eggs', 'seafood', 'meat', 'crab', 'squid'
-])
-
 
 def normalize_user_input(text: str) -> str:
     """Normalize ingredient typed by user — apply synonyms."""
     t = text.lower().strip()
-    # Strip accidental quantities
     t = re.sub(r'^\d[\d\s./]*\s*(cup|tbsp|tsp|kg|g|ml|l|pieces?|nos?|handful)?\s*', '', t)
-    # Apply synonyms (longest key first to avoid partial replacements)
     for raw, mapped in sorted(SYNONYMS.items(), key=lambda x: -len(x[0])):
-        # Word-boundary aware replacement
         t = re.sub(r'\b' + re.escape(raw) + r'\b', mapped, t)
     return t.strip()
 
 
-def normalize_dataset_ingredient(text: str) -> str:
-    """
-    Normalize a dataset ingredient.
-    Strips parenthetical aliases: "potato (aloo) pressure" → "potato"
-    Does NOT apply synonyms (dataset is already in English).
-    """
-    t = text.lower().strip()
-    t = re.sub(r'\s*\([^)]*\)', '', t)   # remove "(aloo)", "(jeera)", etc.
-    t = re.sub(r'\s+', ' ', t).strip()
-    return t
-
-
 class RecipeEngine:
-    def __init__(self, csv_path: str):
+    def __init__(self, json_path: str):
         t0 = time.time()
-        print("Building recipe engine...")
-        self.df = self._load_and_clean(csv_path)
+        print("Building recipe engine v3...")
+        self.df = self._load_and_clean(json_path)
         self._build_tfidf_index()
         elapsed = round((time.time() - t0) * 1000)
         print(f"Ready — {len(self.df)} recipes indexed in {elapsed}ms")
 
     def _load_and_clean(self, path: str) -> pd.DataFrame:
-        df = pd.read_csv(path)
-        df = df.dropna(subset=['Cleaned-Ingredients', 'TranslatedRecipeName'])
-        df = df[(df['TotalTimeInMins'] > 0) & (df['TotalTimeInMins'] <= 300)]
-        df = df.reset_index(drop=True)
-
-        # Parse + normalize dataset ingredients (strip parens, no synonym mapping)
-        df['ing_list'] = df['Cleaned-Ingredients'].apply(
-            lambda x: [normalize_dataset_ingredient(i) for i in x.split(',') if i.strip()]
-        )
-
-        # TF-IDF string for indexing
-        df['ing_tfidf'] = df['ing_list'].apply(
-            lambda ings: ' '.join([i.replace(' ', '_') for i in ings])
-        )
-
-        # Vegetarian flag
-        df['is_veg'] = df['ing_list'].apply(
-            lambda ings: not any(
-                any(m == word for word in ing.split())
-                for ing in ings for m in MEAT_KEYWORDS
-            )
-        )
+        with open(path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        
+        df = pd.DataFrame(data)
+        
+        # Ensure we have valid times
+        df['est_prep_time_min'] = df['est_prep_time_min'].fillna(0)
+        df['est_cook_time_min'] = df['est_cook_time_min'].fillna(0)
+        df['total_time'] = df['est_prep_time_min'] + df['est_cook_time_min']
+        
+        # Fill missing values
+        df['ingredients_canonical'] = df['ingredients_canonical'].apply(lambda x: x if isinstance(x, list) else [])
+        df['ingredient_text'] = df['ingredient_text'].fillna('')
+        df['directions'] = df['directions'].apply(lambda x: x if isinstance(x, list) else [])
+        
         return df
 
     def _build_tfidf_index(self):
@@ -138,7 +109,7 @@ class RecipeEngine:
             min_df=2,
             max_df=0.90,
         )
-        self.tfidf_matrix = self.vectorizer.fit_transform(self.df['ing_tfidf'])
+        self.tfidf_matrix = self.vectorizer.fit_transform(self.df['ingredient_text'])
 
     def _match_ingredients(self, user_norm: list[str], recipe_ings: list[str]):
         """Score each recipe ingredient against the user's pantry."""
@@ -150,7 +121,6 @@ class RecipeEngine:
                     matched = True; break
                 if len(u_ing) > 3 and (u_ing in r_ing or r_ing in u_ing):
                     matched = True; break
-                # Word-level overlap for compounds ("cumin seeds" ↔ "cumin")
                 r_words = set(r_ing.split())
                 u_words = set(u_ing.split())
                 if any(len(w) > 3 for w in (r_words & u_words)):
@@ -164,10 +134,17 @@ class RecipeEngine:
         top_n: int = 4,
         max_missing: int = 5,
         cuisine_filter: str = None,
-        max_time_mins: int = None,
+        course_filter: str = None,
+        taste_filter: str = None,
+        health_level_filter: str = None,
         vegetarian_only: bool = False,
+        vegan_only: bool = False,
+        halal: bool = False,
+        kosher: bool = False,
+        nut_free: bool = False,
+        dairy_free: bool = False,
+        gluten_free: bool = False,
     ) -> list[dict]:
-        # Normalize user input (apply synonyms)
         user_norm = [normalize_user_input(i) for i in user_ingredients]
         user_tfidf_str = ' '.join([i.replace(' ', '_') for i in user_norm])
 
@@ -175,41 +152,81 @@ class RecipeEngine:
         user_vec = self.vectorizer.transform([user_tfidf_str])
         scores = cosine_similarity(user_vec, self.tfidf_matrix).flatten()
 
-        # Larger pool when filters reduce candidates
-        pool_size = top_n * 30 if (cuisine_filter or max_time_mins or vegetarian_only) else top_n * 8
+        pool_size = top_n * 50
         candidates = scores.argsort()[::-1][:pool_size]
 
         results = []
         for idx in candidates:
             row = self.df.iloc[idx]
 
-            if cuisine_filter and cuisine_filter.lower() not in row['Cuisine'].lower():
+            # Filters
+            if cuisine_filter and cuisine_filter.lower() != "any":
+                cuisines = [c.lower() for c in (row.get('cuisine_list') or [])]
+                if cuisine_filter.lower() not in cuisines:
+                    continue
+            
+            if course_filter and course_filter.lower() != "any":
+                courses = [c.lower() for c in (row.get('course_list') or [])]
+                if course_filter.lower() not in courses:
+                    continue
+            
+            if taste_filter and taste_filter.lower() != "any":
+                if row.get('primary_taste') != taste_filter.lower():
+                    continue
+
+            if health_level_filter and health_level_filter.lower() != "any":
+                if row.get('health_level') != health_level_filter.lower():
+                    continue
+
+            if vegetarian_only and not row.get('is_vegetarian'):
                 continue
-            if max_time_mins and row['TotalTimeInMins'] > max_time_mins:
+            if vegan_only and not row.get('is_vegan'):
                 continue
-            if vegetarian_only and not row['is_veg']:
+            if halal and not row.get('is_halal'):
+                continue
+            if kosher and not row.get('is_kosher'):
+                continue
+            if nut_free and not row.get('is_nut_free'):
+                continue
+            if dairy_free and not row.get('is_dairy_free'):
+                continue
+            if gluten_free and not row.get('is_gluten_free'):
                 continue
 
-            available, missing = self._match_ingredients(user_norm, row['ing_list'])
+            available, missing = self._match_ingredients(user_norm, row['ingredients_canonical'])
             if len(missing) > max_missing:
                 continue
 
-            total = len(row['ing_list'])
+            total = len(row['ingredients_canonical'])
             match_pct = round(len(available) / total * 100) if total else 0
+            
+            # Format instructions from list to a string
+            instructions = " ".join(row['directions']) if isinstance(row['directions'], list) else str(row['directions'])
+            
+            # Use first cuisine for display, default to 'Global'
+            cuisine_disp = row.get('cuisine_list')
+            cuisine_disp = cuisine_disp[0].title() if (isinstance(cuisine_disp, list) and cuisine_disp) else "Global"
 
             results.append({
-                'name': row['TranslatedRecipeName'],
-                'cuisine': row['Cuisine'],
-                'time_mins': int(row['TotalTimeInMins']),
+                'name': row['recipe_title'],
+                'cuisine': cuisine_disp,
+                'time_mins': int(row['total_time']),
                 'match_pct': match_pct,
                 'tfidf_score': round(float(scores[idx]), 4),
                 'total_ingredients': total,
                 'available_ingredients': available,
                 'missing_ingredients': missing,
                 'missing_count': len(missing),
-                'instructions': row['TranslatedInstructions'],
-                'image_url': row['image-url'],
-                'source_url': row['URL'],
+                'instructions': instructions,
+                'image_url': '', # Extended dataset doesn't have image-url
+                'source_url': '',
+                # New fields
+                'description': str(row.get('description', '')),
+                'taste': str(row.get('primary_taste', '')),
+                'health_level': str(row.get('health_level', '')),
+                'cook_speed': str(row.get('cook_speed', '')),
+                'difficulty': str(row.get('difficulty', '')),
+                'course': (row.get('course_list') or ['Unknown'])[0].title()
             })
             if len(results) >= top_n:
                 break
@@ -218,37 +235,9 @@ class RecipeEngine:
         return results
 
     def search_json(self, user_ingredients: list[str], **kwargs) -> str:
-        """JSON output for Node.js subprocess calls."""
         return json.dumps(self.search(user_ingredients, **kwargs), ensure_ascii=False, indent=2)
 
-
 if __name__ == "__main__":
-    engine = RecipeEngine('/mnt/user-data/uploads/Cleaned_Indian_Food_Dataset.csv')
-
-    tests = [
-        ("Basic pantry", ["onion","tomato","garlic","ginger","cumin","turmeric","oil","salt"], {"max_missing": 4}),
-        ("Hindi names",  ["aloo","palak","jeera","haldi","dahi","lahsun","pyaz"],              {"max_missing": 4}),
-        ("South Indian chicken <60m", ["chicken","onion","tomato","ginger","garlic","oil","salt","garam masala"],
-                                      {"max_missing":5,"cuisine_filter":"South Indian","max_time_mins":60}),
-        ("Quick veg paneer <30m",     ["paneer","onion","tomato","ginger","garlic","cream","salt","oil"],
-                                      {"max_missing":4,"max_time_mins":30,"vegetarian_only":True}),
-        ("Minimal 5 items",           ["dal","onion","tomato","turmeric","salt"], {"max_missing":4}),
-    ]
-
-    for label, ings, opts in tests:
-        print(f"\n{'='*60}")
-        print(f"TEST: {label}")
-        print(f"USER HAS: {ings}")
-        print('='*60)
-        t0 = time.time()
-        results = engine.search(ings, top_n=4, **opts)
-        ms = round((time.time() - t0) * 1000, 1)
-        if not results:
-            print("  No results (try relaxing filters)")
-        for i, r in enumerate(results, 1):
-            print(f"  #{i} {r['name']}  [{r['cuisine']}] {r['time_mins']}m")
-            print(f"      Match: {r['match_pct']}%  ({len(r['available_ingredients'])}/{r['total_ingredients']})")
-            print(f"      Have:  {', '.join(r['available_ingredients'][:5])}{'...' if len(r['available_ingredients'])>5 else ''}")
-            if r['missing_ingredients']:
-                print(f"      Need:  {', '.join(r['missing_ingredients'])}")
-        print(f"  ⚡ {ms}ms")
+    engine = RecipeEngine('recipes_extended.json')
+    res = engine.search(["chicken", "garlic", "tomato"], top_n=2)
+    print(json.dumps(res, indent=2))
