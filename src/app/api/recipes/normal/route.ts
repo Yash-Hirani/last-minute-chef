@@ -38,7 +38,8 @@ export async function POST(req: NextRequest) {
     cuisine,
     courseType,
     tasteProfile,
-    healthLevel
+    healthLevel,
+    maxTimeMins
   } = body;
 
   if (!ingredients || ingredients.length === 0) {
@@ -54,9 +55,11 @@ export async function POST(req: NextRequest) {
   const gluten_free = dietary.includes('Gluten-Free');
   const nut_free = dietary.includes('Nut-Free');
 
-  // Maintain backward compatibility for mealType (time constraint) if present
+  // Determine max_time_mins from new filter or legacy mealType
   let max_time_mins = null;
-  if (mealType === "Breakfast" || mealType === "Snack") {
+  if (maxTimeMins && maxTimeMins !== "Any") {
+    max_time_mins = parseInt(maxTimeMins, 10);
+  } else if (mealType === "Breakfast" || mealType === "Snack") {
     max_time_mins = 30;
   } else if (mealType === "Lunch" || mealType === "Dinner") {
     max_time_mins = 60;
@@ -71,6 +74,7 @@ export async function POST(req: NextRequest) {
       course_filter: courseType,
       taste_filter: tasteProfile,
       health_level_filter: healthLevel,
+      max_time_mins,
       vegetarian_only,
       vegan_only,
       halal,
@@ -80,12 +84,6 @@ export async function POST(req: NextRequest) {
       gluten_free,
     };
     
-    // Add max_time_mins if provided via legacy mealType or any logic
-    if (max_time_mins) {
-      // Python engine might not support max_time_mins anymore directly if we removed it, but let's pass it if needed, or ignore it.
-      // We removed max_time_mins from python engine params in v3, so we can skip it, or handle it here via JS filter.
-    }
-
     const response = await fetch(RECIPE_ENGINE_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

@@ -9,8 +9,9 @@ interface Props {
   onToggle: () => void;
 }
 
-const CUISINES = ["Any", "American", "Asian", "Indian", "Italian", "French", "Korean", "Thai", "Mediterranean", "Mexican"];
+const CUISINES = ['Any', 'American', 'Asian', 'Chinese', 'Korean', 'Japanese', 'Thai', 'Vietnamese', 'Filipino', 'European', 'French', 'Italian', 'Greek', 'Mediterranean', 'German', 'British', 'Russian', 'Spanish', 'Turkish', 'Indian', 'Middle Eastern', 'Caribbean', 'Latin American', 'Mexican', 'African'];
 const COURSES = ["Any", "Main", "Breakfast", "Dessert", "Snack", "Soup", "Side", "Appetizer"];
+const TIMES = [{label: "Any", val: "Any"}, {label: "≤ 15 min", val: "15"}, {label: "≤ 30 min", val: "30"}, {label: "≤ 60 min", val: "60"}, {label: "≤ 2 hrs", val: "120"}];
 const TASTES = ["Any", "Savory", "Sweet", "Spicy", "Umami", "Sour", "Bitter"];
 const HEALTH_LEVELS = ["Any", "Healthy", "Moderate", "Unhealthy"];
 const DIETARY = ["Vegetarian", "Vegan", "Halal", "Kosher", "Dairy-Free", "Gluten-Free", "Nut-Free"];
@@ -97,6 +98,20 @@ export default function FilterBar({ filters, onFiltersChange, isVisible, onToggl
                     ? "bg-error text-on-error border-error shadow-sm shadow-error/15"
                     : "bg-surface-container-lowest text-on-surface-variant border-outline-variant/30 hover:border-error/30 hover:bg-error/5"
                 }`}>{d}</button>
+              ))}
+            </div>
+          </div>
+
+          {/* Cook Time */}
+          <div>
+            <p className="text-xs font-bold text-on-surface-variant uppercase tracking-wider mb-2">Cook Time</p>
+            <div className="flex flex-wrap gap-2">
+              {TIMES.map((t) => (
+                <button key={t.val} onClick={() => onFiltersChange({ ...filters, maxTimeMins: t.val })} className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all border ${
+                  filters.maxTimeMins === t.val
+                    ? "bg-primary text-on-primary border-primary shadow-sm shadow-primary/15"
+                    : "bg-surface-container-lowest text-on-surface-variant border-outline-variant/30 hover:border-primary/30 hover:bg-primary/5"
+                }`}>{t.label}</button>
               ))}
             </div>
           </div>

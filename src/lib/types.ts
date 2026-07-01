@@ -75,6 +75,7 @@ export interface Filters {
   courseType: string;
   tasteProfile: string;
   healthLevel: string;
+  maxTimeMins: string;
 }
 
 export interface OrderConfirmation {

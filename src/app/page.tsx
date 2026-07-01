@@ -22,7 +22,8 @@ export default function Home() {
     cuisine: "Any",
     courseType: "Any",
     tasteProfile: "Any",
-    healthLevel: "Any"
+    healthLevel: "Any",
+    maxTimeMins: "Any"
   });
   const [showFilters, setShowFilters] = useState(false);
   const [showExplorer, setShowExplorer] = useState(false);
@@ -60,7 +61,8 @@ export default function Home() {
           cuisine: filters.cuisine,
           courseType: filters.courseType,
           tasteProfile: filters.tasteProfile,
-          healthLevel: filters.healthLevel
+          healthLevel: filters.healthLevel,
+          maxTimeMins: filters.maxTimeMins
         }),
       });
       if (!res.ok) throw new Error("Failed to fetch recipes");
@@ -92,7 +94,8 @@ export default function Home() {
           cuisine: filters.cuisine,
           courseType: filters.courseType,
           tasteProfile: filters.tasteProfile,
-          healthLevel: filters.healthLevel
+          healthLevel: filters.healthLevel,
+          maxTimeMins: filters.maxTimeMins
         }),
       });
 
