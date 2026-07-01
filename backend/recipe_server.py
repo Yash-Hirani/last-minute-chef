@@ -9,7 +9,7 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 from recipe_engine import RecipeEngine
 
 # Build index once at startup
-dataset_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'recipes_extended.json')
+dataset_path = os.path.join(os.path.dirname(__file__), 'recipes_clean.json')
 engine = RecipeEngine(dataset_path)
 
 class Handler(BaseHTTPRequestHandler):
@@ -33,6 +33,7 @@ class Handler(BaseHTTPRequestHandler):
                 course_filter=body.get('course_filter'),
                 taste_filter=body.get('taste_filter'),
                 health_level_filter=body.get('health_level_filter'),
+                max_time_mins=body.get('max_time_mins'),
                 vegetarian_only=body.get('vegetarian_only', False),
                 vegan_only=body.get('vegan_only', False),
                 halal=body.get('halal', False),

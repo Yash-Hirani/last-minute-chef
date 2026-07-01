@@ -91,14 +91,16 @@ class RecipeEngine:
         df = pd.DataFrame(data)
         
         # Ensure we have valid times
-        df['est_prep_time_min'] = df['est_prep_time_min'].fillna(0)
-        df['est_cook_time_min'] = df['est_cook_time_min'].fillna(0)
-        df['total_time'] = df['est_prep_time_min'] + df['est_cook_time_min']
+        df['total_time_min'] = df['total_time_min'].fillna(0)
         
         # Fill missing values
         df['ingredients_canonical'] = df['ingredients_canonical'].apply(lambda x: x if isinstance(x, list) else [])
-        df['ingredient_text'] = df['ingredient_text'].fillna('')
         df['directions'] = df['directions'].apply(lambda x: x if isinstance(x, list) else [])
+        
+        # TF-IDF string for indexing
+        df['ing_tfidf'] = df['ingredients_canonical'].apply(
+            lambda ings: ' '.join([str(i).replace(' ', '_') for i in ings])
+        )
         
         return df
 
@@ -109,7 +111,7 @@ class RecipeEngine:
             min_df=2,
             max_df=0.90,
         )
-        self.tfidf_matrix = self.vectorizer.fit_transform(self.df['ingredient_text'])
+        self.tfidf_matrix = self.vectorizer.fit_transform(self.df['ing_tfidf'])
 
     def _match_ingredients(self, user_norm: list[str], recipe_ings: list[str]):
         """Score each recipe ingredient against the user's pantry."""
@@ -137,6 +139,7 @@ class RecipeEngine:
         course_filter: str = None,
         taste_filter: str = None,
         health_level_filter: str = None,
+        max_time_mins: int = None,
         vegetarian_only: bool = False,
         vegan_only: bool = False,
         halal: bool = False,
@@ -178,6 +181,9 @@ class RecipeEngine:
                 if row.get('health_level') != health_level_filter.lower():
                     continue
 
+            if max_time_mins and row.get('total_time_min', 0) > max_time_mins:
+                continue
+
             if vegetarian_only and not row.get('is_vegetarian'):
                 continue
             if vegan_only and not row.get('is_vegan'):
@@ -203,14 +209,13 @@ class RecipeEngine:
             # Format instructions from list to a string
             instructions = " ".join(row['directions']) if isinstance(row['directions'], list) else str(row['directions'])
             
-            # Use first cuisine for display, default to 'Global'
-            cuisine_disp = row.get('cuisine_list')
-            cuisine_disp = cuisine_disp[0].title() if (isinstance(cuisine_disp, list) and cuisine_disp) else "Global"
+            # Use primary_cuisine for display
+            cuisine_disp = row.get('primary_cuisine', 'Global')
 
             results.append({
                 'name': row['recipe_title'],
                 'cuisine': cuisine_disp,
-                'time_mins': int(row['total_time']),
+                'time_mins': int(row['total_time_min']),
                 'match_pct': match_pct,
                 'tfidf_score': round(float(scores[idx]), 4),
                 'total_ingredients': total,
