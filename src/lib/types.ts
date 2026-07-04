@@ -33,6 +33,7 @@ export interface Recipe {
   healthLevel?: string;
   cookSpeed?: string;
   course?: string;
+  imageUrl?: string;
 }
 
 export interface RecipeRequest {

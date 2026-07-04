@@ -223,8 +223,8 @@ class RecipeEngine:
                 'missing_ingredients': missing,
                 'missing_count': len(missing),
                 'instructions': instructions,
-                'image_url': '', # Extended dataset doesn't have image-url
-                'source_url': '',
+                'image_url': str(row.get('image_url', '')),
+                'source_url': str(row.get('source_url', '')),
                 # New fields
                 'description': str(row.get('description', '')),
                 'taste': str(row.get('primary_taste', '')),

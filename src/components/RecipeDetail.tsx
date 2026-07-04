@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+import Image from "next/image";
 import { Recipe } from "@/lib/types";
 
 interface Props {
@@ -9,14 +11,29 @@ interface Props {
 }
 
 export default function RecipeDetail({ recipe, onClose, onOrderMissing }: Props) {
+  const [imageError, setImageError] = useState(false);
   const available = recipe.ingredients.filter((i) => i.available);
   const missing = recipe.ingredients.filter((i) => !i.available);
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-on-surface/30 backdrop-blur-sm pt-8 pb-8 px-4">
-      <div className="w-full max-w-3xl bg-surface-container-lowest rounded-2xl shadow-ambient-3 animate-fade-up">
+      <div className="w-full max-w-3xl bg-surface-container-lowest rounded-2xl shadow-ambient-3 animate-fade-up overflow-hidden flex flex-col">
+        {/* Image Banner */}
+        {recipe.imageUrl && !imageError && (
+          <div className="relative w-full h-64 bg-surface-container-low shrink-0">
+            <Image 
+              src={recipe.imageUrl} 
+              alt={recipe.name} 
+              fill 
+              sizes="(max-width: 1024px) 100vw, 1024px"
+              className="object-cover"
+              onError={() => setImageError(true)}
+            />
+          </div>
+        )}
+
         {/* Header */}
-        <div className="flex items-start justify-between p-6 border-b border-outline-variant/15">
+        <div className="flex items-start justify-between p-6 border-b border-outline-variant/15 shrink-0">
           <div>
             <h2 className="font-[var(--font-display)] text-2xl font-bold text-on-surface leading-tight mb-2">{recipe.name}</h2>
             <div className="flex items-center gap-3 text-sm text-on-surface-variant flex-wrap">

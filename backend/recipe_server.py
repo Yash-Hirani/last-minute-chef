@@ -9,7 +9,7 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 from recipe_engine import RecipeEngine
 
 # Build index once at startup
-dataset_path = os.path.join(os.path.dirname(__file__), 'recipes_clean.json')
+dataset_path = os.path.join(os.path.dirname(__file__), 'recipes_unified.json')
 engine = RecipeEngine(dataset_path)
 
 class Handler(BaseHTTPRequestHandler):

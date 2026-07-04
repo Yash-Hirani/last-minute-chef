@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+import Image from "next/image";
 import { Recipe } from "@/lib/types";
 
 interface Props {
@@ -12,6 +14,7 @@ interface Props {
 }
 
 export default function RecipeCard({ recipe, onViewRecipe, onOrder, onSave, isSaved, index }: Props) {
+  const [imageError, setImageError] = useState(false);
   const totalIngredients = recipe.ingredients.length;
   const availableCount = recipe.ingredients.filter((i) => i.available).length;
   const matchPercent = Math.round((availableCount / totalIngredients) * 100);
@@ -50,8 +53,21 @@ export default function RecipeCard({ recipe, onViewRecipe, onOrder, onSave, isSa
 
   return (
     <div className={`card p-0 overflow-hidden animate-fade-up delay-${index + 1}`}>
-      {/* Gradient Header */}
-      <div className={`h-2 w-full bg-gradient-to-r ${getGradient(recipe.cuisine)}`} />
+      {/* Image or Gradient Header */}
+      {recipe.imageUrl && !imageError ? (
+        <div className="relative w-full h-48 bg-surface-container-low">
+          <Image 
+            src={recipe.imageUrl} 
+            alt={recipe.name} 
+            fill 
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            className="object-cover"
+            onError={() => setImageError(true)}
+          />
+        </div>
+      ) : (
+        <div className={`h-2 w-full bg-gradient-to-r ${getGradient(recipe.cuisine)}`} />
+      )}
       
       {/* Card header */}
       <div className="p-5 pb-4">
