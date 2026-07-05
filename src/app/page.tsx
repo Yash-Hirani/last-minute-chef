@@ -11,7 +11,13 @@ import AuthModal from "@/components/AuthModal";
 import CartSidebar from "@/components/CartSidebar";
 import SortBar from "@/components/SortBar";
 import IngredientExplorer from "@/components/IngredientExplorer";
+import SavedRecipesPanel from "@/components/SavedRecipesPanel";
+import BottomNav from "@/components/BottomNav";
+import SwiggyConnectModal from "@/components/SwiggyConnectModal";
 import { Recipe, Filters, CartItem, SortMode } from "@/lib/types";
+import { useAuth } from "@/lib/authContext";
+import { useEffect } from "react";
+import { toggleSaveRecipeDb, getSavedRecipesDb } from "@/lib/store";
 
 export default function Home() {
   const [ingredients, setIngredients] = useState<string[]>([]);
@@ -31,22 +37,49 @@ export default function Home() {
   const [sortMode, setSortMode] = useState<SortMode>("match");
   const [loading, setLoading] = useState(false);
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
-  const [savedRecipes, setSavedRecipes] = useState<string[]>([]);
+  
+  // Auth & Saved Recipes
+  const { user } = useAuth();
   const [showAuth, setShowAuth] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authReason, setAuthReason] = useState<"ai" | "save" | "order" | null>(null);
+  const [dbSavedRecipes, setDbSavedRecipes] = useState<Recipe[]>([]);
+  const [loadingSaved, setLoadingSaved] = useState(false);
+  const [showSavedPanel, setShowSavedPanel] = useState(false);
+  const [showSwiggyConnect, setShowSwiggyConnect] = useState(false);
+
   const [showCart, setShowCart] = useState(false);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [pendingOrder, setPendingOrder] = useState<Recipe | null>(null);
   const [pendingSave, setPendingSave] = useState<Recipe | null>(null);
+  const [pendingAi, setPendingAi] = useState(false);
+
   const [error, setError] = useState<string | null>(null);
+  const [lastAction, setLastAction] = useState<"normal" | "ai" | null>(null);
 
   const [loadingNormal, setLoadingNormal] = useState(false);
   const [aiUsesLeft, setAiUsesLeft] = useState<number | null>(null); // null = not yet fetched
+
+  useEffect(() => {
+    if (user) {
+      setLoadingSaved(true);
+      getSavedRecipesDb(user.id).then((recipes) => {
+        setDbSavedRecipes(recipes);
+        setLoadingSaved(false);
+      });
+      // Handle pending actions
+      if (pendingOrder) { handleOrder(pendingOrder); setPendingOrder(null); }
+      if (pendingSave) { handleSave(pendingSave); setPendingSave(null); }
+      if (pendingAi) { fetchAIRecipes(); setPendingAi(false); }
+    } else {
+      setDbSavedRecipes([]);
+    }
+  }, [user]);
 
   const findRecipes = async () => {
     if (ingredients.length === 0) return;
     setLoading(true);
     setError(null);
+    setLastAction("normal");
     setRecipes([]);
     setSortMode("match");
     try {
@@ -80,8 +113,16 @@ export default function Home() {
 
   const fetchAIRecipes = async () => {
     if (ingredients.length === 0) return;
+    if (!user) {
+      setPendingAi(true);
+      setAuthReason("ai");
+      setShowAuth(true);
+      return;
+    }
     if (aiUsesLeft !== null && aiUsesLeft <= 0) return;
     setLoadingNormal(true);
+    setError(null);
+    setLastAction("ai");
     try {
       const res = await fetch("/api/recipes", {
         method: "POST",
@@ -170,8 +211,9 @@ export default function Home() {
   }, [recipes, sortMode]);
 
   const handleOrder = (recipe: Recipe) => {
-    if (!isAuthenticated) {
+    if (!user) {
       setPendingOrder(recipe);
+      setAuthReason("order");
       setShowAuth(true);
       return;
     }
@@ -185,31 +227,54 @@ export default function Home() {
     setShowCart(true);
   };
 
-  const handleAuthenticated = () => {
-    setIsAuthenticated(true);
-    setShowAuth(false);
-    if (pendingOrder) { handleOrder(pendingOrder); setPendingOrder(null); }
-    if (pendingSave) { handleSave(pendingSave); setPendingSave(null); }
-  };
-
-  const handleSave = (recipe: Recipe) => {
-    if (!isAuthenticated) {
+  const handleSave = async (recipe: Recipe) => {
+    if (!user) {
       setPendingSave(recipe);
+      setAuthReason("save");
       setShowAuth(true);
       return;
     }
-    setSavedRecipes((prev) => prev.includes(recipe.name) ? prev.filter((n) => n !== recipe.name) : [...prev, recipe.name]);
+
+    // Optimistic UI update
+    const isCurrentlySaved = dbSavedRecipes.some(r => r.id === recipe.id);
+    if (isCurrentlySaved) {
+      setDbSavedRecipes(prev => prev.filter(r => r.id !== recipe.id));
+    } else {
+      setDbSavedRecipes(prev => [recipe, ...prev]);
+    }
+
+    // DB update
+    const isNowSaved = await toggleSaveRecipeDb(user.id, recipe);
+    
+    // Reconcile if optimistic update was wrong (rare, but good practice)
+    if (isNowSaved === isCurrentlySaved) {
+       getSavedRecipesDb(user.id).then(setDbSavedRecipes);
+    }
   };
 
   const handleCheckout = () => {
-    alert("🎉 Order placed! Your ingredients will arrive in 15-25 minutes via Instamart.");
+    setShowSwiggyConnect(true);
+  };
+
+  const handleSwiggyConnected = () => {
+    setShowSwiggyConnect(false);
     setCartItems([]);
     setShowCart(false);
+    // In a real flow, this would redirect to the deep link or return order status
+    setTimeout(() => {
+      alert("🎉 Order successfully placed via Swiggy MCP! Ingredients will arrive via Instamart in 15-25 minutes.");
+    }, 300);
   };
 
   return (
     <>
-      <Header savedCount={savedRecipes.length} cartCount={cartItems.length} onCartClick={() => setShowCart(true)} />
+      <Header 
+        savedCount={dbSavedRecipes.length} 
+        cartCount={cartItems.length} 
+        onCartClick={() => setShowCart(true)} 
+        onSavedClick={() => setShowSavedPanel(true)}
+        onSignInClick={() => setShowAuth(true)}
+      />
 
       <main className="flex-1 pt-16">
         {/* Hero */}
@@ -259,7 +324,15 @@ export default function Home() {
         {/* Results */}
         <section className="max-w-5xl mx-auto px-5 sm:px-6 py-10">
           {error && (
-            <div className="mb-6 p-4 rounded-xl bg-error-light/30 border border-error/20 text-error text-sm text-center font-medium">{error}</div>
+            <div className="mb-6 p-4 rounded-xl bg-error-light/30 border border-error/20 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <span className="text-error text-sm font-medium">{error}</span>
+              <button 
+                onClick={() => lastAction === 'ai' ? fetchAIRecipes() : findRecipes()} 
+                className="px-4 py-2 bg-error/10 text-error rounded-lg text-sm font-semibold hover:bg-error/20 transition-colors whitespace-nowrap"
+              >
+                Try Again
+              </button>
+            </div>
           )}
 
           {loading && <ShimmerLoader />}
@@ -272,9 +345,11 @@ export default function Home() {
                 </h2>
                 <SortBar currentSort={sortMode} onSortChange={setSortMode} />
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div className="columns-1 md:columns-2 gap-5 space-y-5">
                 {sortedRecipes.map((recipe, i) => (
-                  <RecipeCard key={recipe.id} recipe={recipe} onViewRecipe={setSelectedRecipe} onOrder={handleOrder} onSave={handleSave} isSaved={savedRecipes.includes(recipe.name)} index={i} />
+                  <div key={recipe.id} className="break-inside-avoid">
+                    <RecipeCard recipe={recipe} onViewRecipe={setSelectedRecipe} onOrder={handleOrder} onSave={handleSave} isSaved={dbSavedRecipes.some(r => r.id === recipe.id)} index={i} />
+                  </div>
                 ))}
               </div>
               
@@ -321,8 +396,28 @@ export default function Home() {
         />
       )}
       {selectedRecipe && <RecipeDetail recipe={selectedRecipe} onClose={() => setSelectedRecipe(null)} onOrderMissing={handleOrder} />}
-      <AuthModal isOpen={showAuth} onClose={() => { setShowAuth(false); setPendingOrder(null); setPendingSave(null); }} onAuthenticated={handleAuthenticated} />
+      <AuthModal isOpen={showAuth} reason={authReason} onClose={() => { setShowAuth(false); setPendingOrder(null); setPendingSave(null); setPendingAi(false); }} onAuthenticated={() => setShowAuth(false)} />
       <CartSidebar isOpen={showCart} onClose={() => setShowCart(false)} items={cartItems} onRemove={(name) => setCartItems((prev) => prev.filter((i) => i.name !== name))} onCheckout={handleCheckout} />
+      <SavedRecipesPanel 
+        isOpen={showSavedPanel} 
+        onClose={() => setShowSavedPanel(false)} 
+        savedRecipes={dbSavedRecipes} 
+        onRemove={handleSave} 
+        onViewRecipe={setSelectedRecipe} 
+        loading={loadingSaved}
+      />
+      <SwiggyConnectModal
+        isOpen={showSwiggyConnect}
+        onClose={() => setShowSwiggyConnect(false)}
+        onConnected={handleSwiggyConnected}
+      />
+      <BottomNav
+        cartCount={cartItems.length}
+        savedCount={dbSavedRecipes.length}
+        onHomeClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+        onSavedClick={() => setShowSavedPanel(true)}
+        onCartClick={() => setShowCart(true)}
+      />
     </>
   );
 }

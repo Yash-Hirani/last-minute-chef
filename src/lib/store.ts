@@ -3,6 +3,7 @@
 // ============================================
 
 import { Recipe } from "./types";
+import { supabase } from "./supabase";
 
 const KEYS = {
   RECIPES: "lmc_recipes",
@@ -29,28 +30,40 @@ export function getCachedRecipeById(id: string): Recipe | null {
   return recipes.find((r) => r.id === id) || null;
 }
 
-// ---- Saved Recipes ----
+// ---- Saved Recipes (DB Integration) ----
 
-export function getSavedRecipeIds(): string[] {
-  if (typeof window === "undefined") return [];
-  const data = localStorage.getItem(KEYS.SAVED);
-  return data ? JSON.parse(data) : [];
-}
+export async function toggleSaveRecipeDb(userId: string, recipe: Recipe): Promise<boolean> {
+  const { data: existing } = await supabase
+    .from("saved_recipes")
+    .select("recipe_id")
+    .eq("user_id", userId)
+    .eq("recipe_id", recipe.id)
+    .single();
 
-export function toggleSaveRecipe(id: string): boolean {
-  const saved = getSavedRecipeIds();
-  const index = saved.indexOf(id);
-  if (index > -1) {
-    saved.splice(index, 1);
+  if (existing) {
+    // Unsave
+    await supabase.from("saved_recipes").delete().eq("user_id", userId).eq("recipe_id", recipe.id);
+    return false;
   } else {
-    saved.push(id);
+    // Save
+    await supabase.from("saved_recipes").insert({
+      user_id: userId,
+      recipe_id: recipe.id,
+      recipe_data: recipe
+    });
+    return true;
   }
-  localStorage.setItem(KEYS.SAVED, JSON.stringify(saved));
-  return index === -1; // returns true if now saved
 }
 
-export function isRecipeSaved(id: string): boolean {
-  return getSavedRecipeIds().includes(id);
+export async function getSavedRecipesDb(userId: string): Promise<Recipe[]> {
+  const { data, error } = await supabase
+    .from("saved_recipes")
+    .select("recipe_data")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
+
+  if (error || !data) return [];
+  return data.map((row) => row.recipe_data as Recipe);
 }
 
 // ---- Auth ----
