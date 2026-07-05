@@ -18,10 +18,16 @@ export default function CartSidebar({ isOpen, onClose, items, onRemove, onChecko
   const total = subtotal + delivery;
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-on-surface/30 backdrop-blur-sm" onClick={onClose}>
-      <div className="w-full max-w-md bg-surface-container-lowest h-full shadow-ambient-3 slide-in-right flex flex-col" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 z-50 flex items-end md:justify-end bg-on-surface/40 backdrop-blur-sm transition-opacity" onClick={onClose}>
+      <div 
+        className="w-full md:max-w-md bg-surface-container-lowest h-[85vh] md:h-full rounded-t-[32px] md:rounded-none shadow-ambient-3 slide-in-up md:slide-in-right flex flex-col relative" 
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Mobile handle indicator */}
+        <div className="md:hidden w-12 h-1.5 bg-outline-variant/50 rounded-full mx-auto mt-4 mb-2" />
+
         {/* Header */}
-        <div className="flex items-center justify-between p-5 border-b border-outline-variant/15">
+        <div className="flex items-center justify-between px-6 pb-4 pt-2 md:pt-6 md:px-6 border-b border-outline-variant/15">
           <div className="flex items-center gap-3">
             <span className="text-xl">🛒</span>
             <h3 className="font-[var(--font-display)] text-lg font-bold text-on-surface">Your Cart</h3>
@@ -35,7 +41,7 @@ export default function CartSidebar({ isOpen, onClose, items, onRemove, onChecko
         </div>
 
         {/* Items */}
-        <div className="flex-1 overflow-y-auto p-5">
+        <div className="flex-1 overflow-y-auto p-4 md:p-6 pb-32 md:pb-6">
           {items.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center">
               <div className="text-5xl mb-4 animate-float">🛒</div>
@@ -65,19 +71,32 @@ export default function CartSidebar({ isOpen, onClose, items, onRemove, onChecko
         </div>
 
         {/* Footer */}
-        {items.length > 0 && (
-          <div className="p-5 border-t border-outline-variant/15 bg-surface-container-low/50 space-y-3">
-            <div className="space-y-1.5">
-              <div className="flex justify-between text-sm text-on-surface-variant"><span>Subtotal</span><span>₹{subtotal}</span></div>
-              <div className="flex justify-between text-sm text-on-surface-variant"><span>Delivery</span><span>₹{delivery}</span></div>
-              <div className="flex justify-between text-base font-bold text-on-surface pt-1.5 border-t border-outline-variant/15"><span>Total</span><span>₹{total}</span></div>
+        <div className="p-4 md:p-6 bg-surface-container-lowest border-t border-outline-variant/15 shadow-[0_-4px_20px_rgba(0,0,0,0.05)] md:shadow-none pb-safe">
+          <div className="space-y-3 mb-6">
+            <div className="flex justify-between text-sm text-on-surface-variant">
+              <span>Subtotal</span>
+              <span>₹{subtotal}</span>
             </div>
-            <button onClick={onCheckout} className="btn-primary w-full py-3.5 text-sm font-semibold">
-              Checkout with Instamart · ₹{total}
-            </button>
-            <p className="text-center text-xs text-on-surface-variant">⚡ Delivery in 15-25 minutes</p>
+            <div className="flex justify-between text-sm text-on-surface-variant">
+              <span>Delivery fee</span>
+              <span>₹{delivery}</span>
+            </div>
+            <div className="w-full h-px bg-outline-variant/20"></div>
+            <div className="flex justify-between text-base font-bold text-on-surface">
+              <span>Total</span>
+              <span>₹{total}</span>
+            </div>
           </div>
-        )}
+          
+          <button
+            onClick={onCheckout}
+            disabled={items.length === 0}
+            className="w-full btn-primary py-4 text-base font-bold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-ambient-1 hover:shadow-ambient-2 transition-shadow"
+          >
+            Checkout on Instamart
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
+          </button>
+        </div>
       </div>
     </div>
   );
