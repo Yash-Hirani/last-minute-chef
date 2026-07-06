@@ -146,7 +146,7 @@ export async function POST(req: NextRequest) {
       return {
         id: generateId(),
         name: r.name,
-        imageUrl: r.image_url || undefined,
+        imageUrl: r.image_url && r.image_url.includes('supabase') ? r.image_url : undefined,
         cuisine: r.cuisine || "Global",
         cookTime: `${r.time_mins} mins`,
         difficulty: r.difficulty ? (r.difficulty.charAt(0).toUpperCase() + r.difficulty.slice(1)) : "Medium",

@@ -1052,12 +1052,6 @@ export const INGREDIENT_CATALOG: CatalogIngredient[] = [
     "searchKey": "mayonnaise"
   },
   {
-    "name": "Vinegar",
-    "category": "Pantry Staples",
-    "priceHint": 60,
-    "searchKey": "vinegar"
-  },
-  {
     "name": "Tahini",
     "category": "Pantry Staples",
     "priceHint": 200,
@@ -1140,11 +1134,5 @@ export const INGREDIENT_CATALOG: CatalogIngredient[] = [
     "category": "Pantry Staples",
     "priceHint": 180,
     "searchKey": "sesame oil"
-  },
-  {
-    "name": "Mustard Oil",
-    "category": "Pantry Staples",
-    "priceHint": 160,
-    "searchKey": "mustard oil"
   }
 ];
