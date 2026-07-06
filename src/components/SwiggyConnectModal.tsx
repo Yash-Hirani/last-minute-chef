@@ -43,7 +43,7 @@ export default function SwiggyConnectModal({ isOpen, onClose, onConnected }: Pro
           {step === "intro" ? (
             <>
               <div className="flex items-center justify-center gap-4 mb-6">
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center text-3xl shadow-lg shadow-primary/20">
+                <div className="w-16 h-16 rounded-2xl bg-primary flex items-center justify-center text-3xl shadow-lg shadow-primary/20">
                   🍳
                 </div>
                 <div className="flex gap-1.5 items-center text-outline-variant/60">

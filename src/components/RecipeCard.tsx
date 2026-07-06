@@ -41,14 +41,11 @@ export default function RecipeCard({ recipe, onViewRecipe, onOrder, onSave, isSa
     Unhealthy: "bg-error/10 text-error border-error/20",
   };
 
-  const getGradient = (cuisine: string) => {
-    const c = cuisine.toLowerCase();
-    if (c.includes("asian") || c.includes("chinese") || c.includes("korean")) return "from-orange-500 to-red-500";
-    if (c.includes("italian") || c.includes("mediterranean")) return "from-green-500 to-emerald-700";
-    if (c.includes("indian")) return "from-yellow-400 to-orange-500";
-    if (c.includes("french") || c.includes("european")) return "from-blue-400 to-indigo-500";
-    if (c.includes("american")) return "from-red-500 to-blue-500";
-    return "from-primary-light to-primary";
+  const getSolidColor = (cuisine: string) => {
+    if (cuisine === "North Indian") return "bg-primary";
+    if (cuisine === "South Indian") return "bg-secondary";
+    if (cuisine === "Maharashtrian") return "bg-primary-dark";
+    return "bg-outline";
   };
 
   return (
@@ -66,7 +63,7 @@ export default function RecipeCard({ recipe, onViewRecipe, onOrder, onSave, isSa
           />
         </div>
       ) : (
-        <div className={`h-2 w-full bg-gradient-to-r ${getGradient(recipe.cuisine)}`} />
+        <div className={`h-2 w-full ${getSolidColor(recipe.cuisine)}`} />
       )}
       
       {/* Card header */}

@@ -14,6 +14,7 @@ interface HeaderProps {
 
 export default function Header({ savedCount, cartCount, onCartClick, onSavedClick, onSignInClick }: HeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const { user, signOut, loading } = useAuth();
 
   return (
@@ -22,7 +23,7 @@ export default function Header({ savedCount, cartCount, onCartClick, onSavedClic
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-3 group">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center text-lg shadow-lg shadow-primary/15 group-hover:shadow-primary/25 transition-shadow">
+            <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-lg shadow-lg shadow-primary/15 group-hover:shadow-primary/25 transition-shadow">
               🍳
             </div>
             <div>
@@ -62,9 +63,41 @@ export default function Header({ savedCount, cartCount, onCartClick, onSavedClic
             {loading ? (
                <div className="w-20 h-8 animate-pulse bg-surface-container rounded-full"></div>
             ) : user ? (
-              <div className="flex items-center gap-3">
-                 <span className="text-sm font-medium text-on-surface-variant truncate max-w-[160px]">{user.email}</span>
-                 <button onClick={signOut} className="text-xs font-semibold text-error hover:text-error/80 px-3 py-1.5 rounded-full hover:bg-error/10 transition-colors">Sign Out</button>
+              <div className="flex items-center gap-3 relative">
+                 <button onClick={() => setProfileMenuOpen(!profileMenuOpen)} className="flex items-center gap-2 px-3 py-1.5 rounded-full hover:bg-surface-container transition-colors text-sm font-medium text-on-surface">
+                   <div className="w-7 h-7 rounded-full bg-primary/20 text-primary flex items-center justify-center font-bold text-xs uppercase">
+                     {user.email ? user.email[0] : "U"}
+                   </div>
+                   Profile
+                 </button>
+
+                 {profileMenuOpen && (
+                   <div className="absolute top-full right-0 mt-2 w-56 bg-surface-container-lowest rounded-xl shadow-ambient-3 border border-outline-variant/15 overflow-hidden slide-in-up">
+                     <div className="p-4 border-b border-outline-variant/15">
+                       <p className="text-sm font-semibold text-on-surface truncate">{user.email}</p>
+                       <p className="text-xs text-primary mt-1 font-medium">5 AI uses left today</p>
+                     </div>
+                     <div className="p-2 space-y-1">
+                       <button className="w-full text-left px-3 py-2 text-sm text-on-surface-variant hover:bg-surface-container rounded-lg transition-colors flex justify-between items-center group">
+                         Dietary Preferences <span className="text-[10px] bg-secondary/10 text-secondary px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity">Soon</span>
+                       </button>
+                       <button className="w-full text-left px-3 py-2 text-sm text-on-surface-variant hover:bg-surface-container rounded-lg transition-colors flex justify-between items-center group">
+                         Order History <span className="text-[10px] bg-secondary/10 text-secondary px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity">Soon</span>
+                       </button>
+                       <button className="w-full text-left px-3 py-2 text-sm text-on-surface-variant hover:bg-surface-container rounded-lg transition-colors flex justify-between items-center group">
+                         Saved Addresses <span className="text-[10px] bg-secondary/10 text-secondary px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity">Soon</span>
+                       </button>
+                     </div>
+                     <div className="p-2 border-t border-outline-variant/15">
+                       <button className="w-full text-left px-3 py-2 text-sm text-primary font-medium hover:bg-primary/5 rounded-lg transition-colors flex items-center gap-2">
+                         <span>🔗</span> Link Swiggy Account
+                       </button>
+                       <button onClick={() => { signOut(); setProfileMenuOpen(false); }} className="w-full text-left px-3 py-2 text-sm text-error font-medium hover:bg-error/10 rounded-lg transition-colors mt-1">
+                         Sign Out
+                       </button>
+                     </div>
+                   </div>
+                 )}
               </div>
             ) : (
               <button onClick={onSignInClick} className="text-sm font-semibold text-primary hover:text-primary-dark px-4 py-2 rounded-full hover:bg-primary/5 transition-colors">
@@ -78,10 +111,23 @@ export default function Header({ savedCount, cartCount, onCartClick, onSavedClic
             {loading ? (
               <div className="w-8 h-8 animate-pulse bg-surface-container rounded-full"></div>
             ) : user ? (
-              <>
-                <span className="text-xs font-medium text-on-surface-variant truncate max-w-[100px]">{user.email?.split('@')[0]}</span>
-                <button onClick={signOut} className="text-xs font-semibold text-error hover:text-error/80 px-2 py-1.5 rounded-full hover:bg-error/10 transition-colors">Sign Out</button>
-              </>
+              <div className="relative">
+                <button onClick={() => setProfileMenuOpen(!profileMenuOpen)} className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/20 text-primary font-bold text-xs uppercase">
+                   {user.email ? user.email[0] : "U"}
+                </button>
+                {profileMenuOpen && (
+                   <div className="absolute top-full right-0 mt-2 w-48 bg-surface-container-lowest rounded-xl shadow-ambient-3 border border-outline-variant/15 overflow-hidden z-50">
+                     <div className="p-3 border-b border-outline-variant/15">
+                       <p className="text-xs font-semibold text-on-surface truncate">{user.email}</p>
+                     </div>
+                     <div className="p-2">
+                       <button onClick={() => { signOut(); setProfileMenuOpen(false); }} className="w-full text-left px-3 py-2 text-sm text-error font-medium hover:bg-error/10 rounded-lg transition-colors">
+                         Sign Out
+                       </button>
+                     </div>
+                   </div>
+                )}
+              </div>
             ) : (
               <button onClick={onSignInClick} className="p-2 rounded-xl text-primary hover:bg-primary/5 transition-all">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">

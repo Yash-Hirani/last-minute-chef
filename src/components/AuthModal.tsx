@@ -125,7 +125,7 @@ export default function AuthModal({ isOpen, onClose, onAuthenticated, reason }: 
 
         {/* Header */}
         <div className="text-center mb-7">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center text-2xl mx-auto mb-4 shadow-lg shadow-primary/15">
+          <div className="w-14 h-14 rounded-2xl bg-primary flex items-center justify-center text-2xl mx-auto mb-4 shadow-lg shadow-primary/15">
             🍳
           </div>
           <h3 className="font-[var(--font-display)] text-xl font-bold text-on-surface">{title}</h3>
