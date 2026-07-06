@@ -55,12 +55,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const verifyOtp = async (email: string, token: string) => {
     try {
-      const { error } = await supabase.auth.verifyOtp({
+      let res = await supabase.auth.verifyOtp({
         email,
         token,
         type: 'email',
       });
-      return { error };
+      
+      // Fallback for different Supabase project configurations
+      if (res.error?.message?.toLowerCase().includes("invalid token")) {
+        res = await supabase.auth.verifyOtp({ email, token, type: 'signup' });
+        if (res.error) {
+          res = await supabase.auth.verifyOtp({ email, token, type: 'magiclink' });
+        }
+      }
+
+      return { error: res.error };
     } catch (err: any) {
       console.error("verifyOtp error:", err);
       return { error: { message: err.message || "Failed to verify code. Please try again." } };

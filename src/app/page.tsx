@@ -59,6 +59,64 @@ export default function Home() {
   const [loadingNormal, setLoadingNormal] = useState(false);
   const [aiUsesLeft, setAiUsesLeft] = useState<number | null>(null); // null = not yet fetched
 
+  // Hydrate state from sessionStorage on mount
+  useEffect(() => {
+    try {
+      const storedIngredients = sessionStorage.getItem("lmc_ingredients");
+      if (storedIngredients) setIngredients(JSON.parse(storedIngredients));
+
+      const storedRecipes = sessionStorage.getItem("lmc_recipes");
+      if (storedRecipes) setRecipes(JSON.parse(storedRecipes));
+
+      const storedFilters = sessionStorage.getItem("lmc_filters");
+      if (storedFilters) setFilters(JSON.parse(storedFilters));
+
+      const storedPendingAi = sessionStorage.getItem("lmc_pendingAi");
+      if (storedPendingAi) setPendingAi(JSON.parse(storedPendingAi));
+
+      const storedPendingOrder = sessionStorage.getItem("lmc_pendingOrder");
+      if (storedPendingOrder) setPendingOrder(JSON.parse(storedPendingOrder));
+
+      const storedPendingSave = sessionStorage.getItem("lmc_pendingSave");
+      if (storedPendingSave) setPendingSave(JSON.parse(storedPendingSave));
+    } catch (e) {
+      console.error("Failed to restore state from sessionStorage", e);
+    }
+  }, []);
+
+  // Sync state to sessionStorage
+  useEffect(() => {
+    sessionStorage.setItem("lmc_ingredients", JSON.stringify(ingredients));
+  }, [ingredients]);
+
+  useEffect(() => {
+    sessionStorage.setItem("lmc_recipes", JSON.stringify(recipes));
+  }, [recipes]);
+
+  useEffect(() => {
+    sessionStorage.setItem("lmc_filters", JSON.stringify(filters));
+  }, [filters]);
+
+  useEffect(() => {
+    sessionStorage.setItem("lmc_pendingAi", JSON.stringify(pendingAi));
+  }, [pendingAi]);
+
+  useEffect(() => {
+    if (pendingOrder) {
+      sessionStorage.setItem("lmc_pendingOrder", JSON.stringify(pendingOrder));
+    } else {
+      sessionStorage.removeItem("lmc_pendingOrder");
+    }
+  }, [pendingOrder]);
+
+  useEffect(() => {
+    if (pendingSave) {
+      sessionStorage.setItem("lmc_pendingSave", JSON.stringify(pendingSave));
+    } else {
+      sessionStorage.removeItem("lmc_pendingSave");
+    }
+  }, [pendingSave]);
+
   useEffect(() => {
     if (user) {
       setLoadingSaved(true);

@@ -63,3 +63,5 @@ Thumbs.db
 *.csv
 recipes_*.json
 backend/recipes_clean.json
+
+Food Images/

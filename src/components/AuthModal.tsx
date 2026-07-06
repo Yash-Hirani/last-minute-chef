@@ -215,17 +215,17 @@ export default function AuthModal({ isOpen, onClose, onAuthenticated, reason }: 
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-on-surface mb-2">6-digit Code</label>
+              <label className="block text-sm font-semibold text-on-surface mb-2">Login Code</label>
               <input
                 type="text"
                 inputMode="numeric"
                 value={otp}
-                onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                onKeyDown={(e) => e.key === "Enter" && otp.length === 6 && handleVerify()}
+                onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 8))}
+                onKeyDown={(e) => e.key === "Enter" && otp.length >= 6 && handleVerify()}
                 placeholder="— — — — — —"
                 className="input-well w-full px-4 py-3.5 bg-transparent text-center text-on-surface text-xl tracking-[0.6em] font-bold placeholder:text-outline placeholder:tracking-normal placeholder:text-sm placeholder:font-normal outline-none focus:outline-none focus:ring-0"
                 id="otp-input"
-                maxLength={6}
+                maxLength={8}
                 autoFocus
                 autoComplete="one-time-code"
               />
