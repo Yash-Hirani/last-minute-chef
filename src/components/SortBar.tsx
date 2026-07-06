@@ -15,24 +15,24 @@ export default function SortBar({ currentSort, onSortChange }: Props) {
   ];
 
   return (
-    <div className="flex items-center gap-2 bg-surface-container-low p-1.5 rounded-xl border border-outline-variant/20 shadow-sm self-start">
-      {modes.map((mode) => {
-        const isActive = currentSort === mode.id;
-        return (
-          <button
-            key={mode.id}
-            onClick={() => onSortChange(mode.id)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
-              isActive
-                ? "bg-surface-container-highest text-on-surface shadow-sm border border-outline-variant/30"
-                : "text-on-surface-variant hover:text-on-surface hover:bg-surface-container/50 border border-transparent"
-            }`}
-          >
-            <span className={isActive ? "opacity-100" : "opacity-70"}>{mode.icon}</span>
-            {mode.label}
-          </button>
-        );
-      })}
+    <div className="flex items-center gap-2 self-start">
+      <span className="text-sm font-medium text-on-surface-variant">Sort:</span>
+      <div className="relative">
+        <select
+          value={currentSort}
+          onChange={(e) => onSortChange(e.target.value as SortMode)}
+          className="bg-surface-container-low text-on-surface text-sm font-medium rounded-lg pl-3 pr-8 py-2 border border-outline-variant/20 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary cursor-pointer shadow-sm appearance-none"
+        >
+          {modes.map((mode) => (
+            <option key={mode.id} value={mode.id}>
+              {mode.label}
+            </option>
+          ))}
+        </select>
+        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-on-surface-variant">
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+        </div>
+      </div>
     </div>
   );
 }
