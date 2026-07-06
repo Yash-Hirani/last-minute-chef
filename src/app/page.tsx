@@ -37,6 +37,7 @@ export default function Home() {
   const [sortMode, setSortMode] = useState<SortMode>("match");
   const [loading, setLoading] = useState(false);
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
+  const [selectedRecipeContext, setSelectedRecipeContext] = useState<"search" | "saved">("search");
   
   // Auth & Saved Recipes
   const { user } = useAuth();
@@ -336,7 +337,7 @@ export default function Home() {
 
       <main className="flex-1 pt-16">
         {/* Hero */}
-        <section className="relative overflow-hidden bg-gradient-to-b from-primary-light/30 via-surface to-surface pt-16 pb-12">
+        <section className="relative overflow-hidden bg-surface-container-lowest pt-16 pb-12">
           {/* Warm glow bg */}
           <div className="absolute inset-0 pointer-events-none">
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-primary/5 rounded-full blur-3xl" />
@@ -406,7 +407,14 @@ export default function Home() {
               <div className="columns-1 md:columns-2 gap-5 space-y-5">
                 {sortedRecipes.map((recipe, i) => (
                   <div key={recipe.id} className="break-inside-avoid">
-                    <RecipeCard recipe={recipe} onViewRecipe={setSelectedRecipe} onOrder={handleOrder} onSave={handleSave} isSaved={dbSavedRecipes.some(r => r.id === recipe.id)} index={i} />
+                    <RecipeCard 
+                      recipe={recipe} 
+                      onViewRecipe={(r) => { setSelectedRecipe(r); setSelectedRecipeContext("search"); }} 
+                      onOrder={handleOrder} 
+                      onSave={handleSave} 
+                      isSaved={dbSavedRecipes.some(r => r.id === recipe.id)} 
+                      index={i} 
+                    />
                   </div>
                 ))}
               </div>
@@ -453,7 +461,14 @@ export default function Home() {
           onClose={() => setShowExplorer(false)}
         />
       )}
-      {selectedRecipe && <RecipeDetail recipe={selectedRecipe} onClose={() => setSelectedRecipe(null)} onOrderMissing={handleOrder} />}
+      {selectedRecipe && (
+        <RecipeDetail 
+          recipe={selectedRecipe} 
+          onClose={() => setSelectedRecipe(null)} 
+          onOrderMissing={handleOrder} 
+          hideMissingContext={selectedRecipeContext === "saved"}
+        />
+      )}
       <AuthModal isOpen={showAuth} reason={authReason} onClose={() => { setShowAuth(false); setPendingOrder(null); setPendingSave(null); setPendingAi(false); }} onAuthenticated={() => setShowAuth(false)} />
       <CartSidebar isOpen={showCart} onClose={() => setShowCart(false)} items={cartItems} onRemove={(name) => setCartItems((prev) => prev.filter((i) => i.name !== name))} onCheckout={handleCheckout} />
       <SavedRecipesPanel 
@@ -461,7 +476,7 @@ export default function Home() {
         onClose={() => setShowSavedPanel(false)} 
         savedRecipes={dbSavedRecipes} 
         onRemove={handleSave} 
-        onViewRecipe={setSelectedRecipe} 
+        onViewRecipe={(r) => { setSelectedRecipe(r); setSelectedRecipeContext("saved"); }} 
         loading={loadingSaved}
       />
       <SwiggyConnectModal

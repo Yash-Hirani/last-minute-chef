@@ -57,8 +57,7 @@ export default function SavedRecipesPanel({ isOpen, onClose, savedRecipes, onRem
                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
                     </button>
                   </div>
-                  <div className="flex justify-between items-center mt-2">
-                     <span className={`text-xs font-bold ${recipe.matchPercentage >= 70 ? "text-secondary" : recipe.matchPercentage >= 50 ? "text-primary" : "text-error"}`}>{recipe.matchPercentage}% match</span>
+                  <div className="flex justify-end items-center mt-2">
                      <button onClick={() => { onViewRecipe(recipe); onClose(); }} className="text-sm font-semibold text-primary hover:text-primary-dark">View Recipe →</button>
                   </div>
                 </div>

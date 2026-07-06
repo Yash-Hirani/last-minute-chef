@@ -8,9 +8,10 @@ interface Props {
   recipe: Recipe;
   onClose: () => void;
   onOrderMissing: (recipe: Recipe) => void;
+  hideMissingContext?: boolean;
 }
 
-export default function RecipeDetail({ recipe, onClose, onOrderMissing }: Props) {
+export default function RecipeDetail({ recipe, onClose, onOrderMissing, hideMissingContext }: Props) {
   const [imageError, setImageError] = useState(false);
   const available = recipe.ingredients.filter((i) => i.available);
   const missing = recipe.ingredients.filter((i) => !i.available);
@@ -72,54 +73,49 @@ export default function RecipeDetail({ recipe, onClose, onOrderMissing }: Props)
           <div className="lg:w-80 p-6 space-y-5">
             {/* Ingredients */}
             <div className="bg-surface-container-low rounded-xl p-4">
-              <h4 className="font-[var(--font-display)] text-sm font-bold text-on-surface mb-3 uppercase tracking-wide">Have ({available.length})</h4>
-              <div className="space-y-2 mb-4">
-                {recipe.ingredients.filter((i) => i.available).map((ing, idx) => (
-                  <div key={`${ing.name}-${idx}`} className="flex justify-between items-center text-sm">
-                    <span className="flex items-center gap-2 text-on-surface"><span className="text-secondary">✓</span> {ing.name}</span>
-                    <span className="text-on-surface-variant text-xs">{ing.quantity}</span>
-                  </div>
-                ))}
-              </div>
-
-              {missing.length > 0 && (
+              {hideMissingContext ? (
                 <>
-                  <h4 className="text-xs font-bold text-error uppercase tracking-wide mb-3">Missing ({missing.length})</h4>
+                  <h4 className="font-[var(--font-display)] text-sm font-bold text-on-surface mb-3 uppercase tracking-wide">Ingredients</h4>
                   <div className="space-y-2">
-                    {recipe.ingredients.filter((i) => !i.available).map((ing, idx) => (
+                    {recipe.ingredients.map((ing, idx) => (
                       <div key={`${ing.name}-${idx}`} className="flex justify-between items-center text-sm">
-                        <span className="flex items-center gap-2 text-on-surface"><span className="text-error">✕</span> {ing.name}</span>
+                        <span className="flex items-center gap-2 text-on-surface"><span className="text-primary">•</span> {ing.name}</span>
                         <span className="text-on-surface-variant text-xs">{ing.quantity}</span>
                       </div>
                     ))}
                   </div>
                 </>
+              ) : (
+                <>
+                  <h4 className="font-[var(--font-display)] text-sm font-bold text-on-surface mb-3 uppercase tracking-wide">Have ({available.length})</h4>
+                  <div className="space-y-2 mb-4">
+                    {recipe.ingredients.filter((i) => i.available).map((ing, idx) => (
+                      <div key={`${ing.name}-${idx}`} className="flex justify-between items-center text-sm">
+                        <span className="flex items-center gap-2 text-on-surface"><span className="text-secondary">✓</span> {ing.name}</span>
+                        <span className="text-on-surface-variant text-xs">{ing.quantity}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {missing.length > 0 && (
+                    <>
+                      <h4 className="text-xs font-bold text-error uppercase tracking-wide mb-3">Missing ({missing.length})</h4>
+                      <div className="space-y-2">
+                        {recipe.ingredients.filter((i) => !i.available).map((ing, idx) => (
+                          <div key={`${ing.name}-${idx}`} className="flex justify-between items-center text-sm">
+                            <span className="flex items-center gap-2 text-on-surface"><span className="text-error">✕</span> {ing.name}</span>
+                            <span className="text-on-surface-variant text-xs">{ing.quantity}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </>
               )}
             </div>
 
-            {/* Nutrition */}
-            {recipe.nutrition && (
-              <div className="bg-surface-container-low rounded-xl p-4">
-                <h4 className="font-[var(--font-display)] text-sm font-bold text-on-surface mb-3">Nutrition (per serving)</h4>
-                <div className="grid grid-cols-2 gap-3">
-                  {[
-                    { label: "Calories", value: recipe.nutrition.calories, icon: "🔥" },
-                    { label: "Protein", value: recipe.nutrition.protein, icon: "💪" },
-                    { label: "Carbs", value: recipe.nutrition.carbs, icon: "🌾" },
-                    { label: "Fat", value: recipe.nutrition.fat, icon: "🫒" },
-                  ].map(({ label, value, icon }) => (
-                    <div key={label} className="text-center py-2.5 rounded-lg bg-surface-container-lowest">
-                      <div className="text-base mb-0.5">{icon}</div>
-                      <div className="text-sm font-bold text-on-surface">{value}</div>
-                      <div className="text-xs text-on-surface-variant">{label}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
             {/* Order */}
-            {missing.length > 0 && (
+            {!hideMissingContext && missing.length > 0 && (
               <div className="bg-surface-container-low rounded-xl p-4">
                 <div className="flex justify-between items-center mb-3">
                   <span className="text-sm font-medium text-on-surface">Total to order</span>
